@@ -4,9 +4,9 @@
 
 //VARIABLES
 let theme = {
-  network:"Blue",
-  navbar:"Blue",
-  clock:"Analogue"
+  network: "Blue",
+  navbar: "Blue",
+  clock: "Analogue",
 };
 
 let keys = [];
@@ -41,18 +41,17 @@ let charts = {
   assets: [],
   votes: [],
   data: [],
+  values: [],
+  show: [],
+  dates: [],
 };
-
-let values = [];
-let show = [];
-let dates = [];
 
 //KEYS
 let numpadOn = false;
 let numbers = [];
 let number;
 let keymenu = {
-  show:false
+  show: false,
 };
 
 //SETUP]
@@ -109,6 +108,7 @@ function windowResized() {
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
   data = {
     delta: data.delta.getArray(),
     flow: data.flow.getArray(),
@@ -127,7 +127,6 @@ function setup() {
   //SIGN IN
   account = getItem("EMAIL");
   email = createInput();
-  email.style('font-size', '20px');
   email.size(width * 0.7, height / 12);
   email.position(width * 0.15, height / 2);
   email.style("background-color", color(0, 0, 0, 0));
@@ -152,55 +151,56 @@ function setup() {
   }
 
   filtercharts(keys);
-  
+
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
-    points.push([random(width), random(height),random(-1,1),random(-1,1)]);
+    points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
   }
 }
 //FUNCTIONS
-function numpad(){
+function numpad() {
   textSize(s * 50);
   for (let i = 0; i < 9; i++) {
-    fill(lerpColor(c("White"),color(255,255,255,0),0.8));
+    fill(lerpColor(c("White"), color(255, 255, 255, 0), 0.8));
     ellipse(
-      ((i % 3) * width/4) + width/4,
-      (floor(i / 3) * height/7) + height / 2,
-      s*100,
-      s*100
+      ((i % 3) * width) / 4 + width / 4,
+      (floor(i / 3) * height) / 7 + height / 2,
+      s * 100,
+      s * 100
     );
     fill(c("White"));
     text(
       i + 1,
-      ((i % 3) * width/4) + width/4,
-      (floor(i / 3) * height/7) + height / 2
+      ((i % 3) * width) / 4 + width / 4,
+      (floor(i / 3) * height) / 7 + height / 2
     );
   }
   for (let i = 0; i < 9; i++) {
     if (
       dist(
-        ((i % 3) * width/4) + width/4,
-        (floor(i / 3) * height/7) + height / 2,
+        ((i % 3) * width) / 4 + width / 4,
+        (floor(i / 3) * height) / 7 + height / 2,
         mouseX,
         mouseY
-      )<s*50 &&
+      ) <
+        s * 50 &&
       hold === 1
     ) {
       return i + 1;
     }
   }
 }
-function animation(){
+function animation() {
   strokeWeight(2);
   for (let i = 0; i < points.length; i++) {
-    points[i][0] += points[i][2]/10;
-    points[i][1] += points[i][3]/10;
-    
-    if (points[i][0]>width  || points[i][0]<0){
-      points[i][2]=-points[i][2];
+    points[i][0] += points[i][2] / 10;
+    points[i][1] += points[i][3] / 10;
+
+    if (points[i][0] > width || points[i][0] < 0) {
+      points[i][2] = -points[i][2];
     }
-    if (points[i][1]>height || points[i][1]<0){
-      points[i][3]=-points[i][3];
+    if (points[i][1] > height || points[i][1] < 0) {
+      points[i][3] = -points[i][3];
     }
   }
 
@@ -208,11 +208,12 @@ function animation(){
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
       let d = dist(points[i][0], points[i][1], points[j][0], points[j][1]);
-      stroke(lerpColor(color(0,0,0,0),c(theme.network),map(d,0,s*300,1,0))); 
+      stroke(
+        lerpColor(color(0, 0, 0, 0), c(theme.network), map(d, 0, s * 300, 1, 0))
+      );
       line(points[i][0], points[i][1], points[j][0], points[j][1]);
     }
   }
-
 }
 function button(x, y, w, h) {
   return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + h;
@@ -221,24 +222,24 @@ function filtercharts(keys) {
   for (let i = 0; i < data.charts.length; i++) {
     if (
       data.charts[i][3] !== "" &&
-      charts.assets.indexOf(data.charts[i][3]) === -1
+      charts.assets.indexOf(data.charts[i][2]) === -1
     ) {
       a = false;
-      if (data.charts[i][3].indexOf("-") === -1) {
+      if (data.charts[i][2].indexOf("-") === -1) {
         a = true;
       } else {
         for (let j = 0; j < keys.length; j++) {
-          if (data.charts[i][3].split("-")[1] === keys[j]) {
+          if (data.charts[i][2].split("-")[1] === keys[j]) {
             a = true;
           }
         }
       }
       if (a) {
-        charts.assets.push(data.charts[i][3]);
+        charts.assets.push(data.charts[i][2]);
         charts.votes.push(1);
       }
     } else {
-      charts.votes[charts.assets.indexOf(data.charts[i][3])]++;
+      charts.votes[charts.assets.indexOf(data.charts[i][2])]++;
     }
   }
 
@@ -252,7 +253,7 @@ function filtercharts(keys) {
   charts.assets = [];
 
   for (let i = 0; i < charts.data.length; i++) {
-    if (keys.length>0 || charts.data[i].value > 1) {
+    if (keys.length > 0 || charts.data[i].value > 1) {
       charts.assets.push(charts.data[i].name);
       charts.votes.push(charts.data[i].value);
     }
@@ -399,6 +400,7 @@ function navbar() {
     storeItem("PAGE", stage);
     scroll = 0;
     start = frameCount;
+    wait = true;
   }
 }
 
@@ -614,7 +616,7 @@ function flashcards() {
   rect(width / 80, height / 4, width / 180, height / 2, 20);
   rect(width / 40, height / 4, width / 180, height / 2, 20);
 
-  if (hold === 1 && mouseX < width / 40) {
+  if (hold === 1 && mouseX < width / 20) {
     stage = "EXIT-FLOW";
     wait = true;
   }
@@ -639,34 +641,24 @@ function leaderboards() {
   choosen = list(charts.assets, height / 10, scroll, charts.votes);
   if (choosen) {
     file = [];
+    charts.date = "";
+    charts.dates = [];
+    charts.values = [];
     for (let i = 0; i < data.charts.length; i++) {
-      if (data.charts[i][3] === choosen) {
-        if (data.charts[i][2] === "") {
-          stage = "CHART";
+      if (data.charts[i][2] === choosen) {
+        timestamp = data.charts[i][0].split(" ")[0];
+        value = float(data.charts[i][3]);
+        if (charts.date !== timestamp) {
+          charts.date = timestamp;
+          charts.values.push(value);
+          charts.dates.push(charts.date);
         } else {
-          stage = "LEADERBOARD";
+          charts.values[charts.values.length - 1] =
+            (charts.values[charts.values.length - 1] + value) / 2;
         }
       }
     }
-    if (stage === "LEADERBOARD") {
-    } else {
-      date = "";
-      dates = [];
-      values = [];
-      for (let i = 0; i < data.charts.length; i++) {
-        if (data.charts[i][3] === choosen) {
-          timestamp = data.charts[i][0].split(" ")[0];
-          value = float(data.charts[i][4]);
-          if (date !== timestamp) {
-            date = timestamp;
-            values.push(value);
-            dates.push(date);
-          } else {
-            values[values.length - 1] = (values[values.length - 1] + value) / 2;
-          }
-        }
-      }
-    }
+    stage = "CHART";
   }
 
   navbar();
@@ -680,17 +672,17 @@ function showchart() {
   if (scroll < 0) {
     scroll = 0;
   }
-  if (scroll > ((values.length - 1) * width) / 4) {
-    scroll = ((values.length - 1) * width) / 4;
+  if (scroll > ((charts.values.length - 1) * width) / 4) {
+    scroll = ((charts.values.length - 1) * width) / 4;
   }
   strokeWeight(1);
   beginShape();
-  for (let i = 0; i < values.length; i++) {
+  for (let i = 0; i < charts.values.length; i++) {
     if ((-i * width) / 4 + scroll + width / 2 > 0) {
       noStroke();
       fill(c("White"));
       textSize(s * 15);
-      text(dates[i], width / 2 + scroll + (-i * width) / 4, height / 7);
+      text(charts.dates[i], width / 2 + scroll + (-i * width) / 4, height / 7);
 
       stroke(c("Grey2"));
       line(
@@ -702,7 +694,13 @@ function showchart() {
 
       vertex(
         (-i * width) / 4 + scroll + width / 2,
-        map(values[i], 10, 0, height / 5, (10 * height) / 15 + height / 5)
+        map(
+          charts.values[i],
+          10,
+          0,
+          height / 5,
+          (10 * height) / 15 + height / 5
+        )
       );
     }
   }
@@ -750,7 +748,7 @@ function showchart() {
   rect(width / 80, height / 4, width / 180, height / 2, 20);
   rect(width / 40, height / 4, width / 180, height / 2, 20);
 
-  if (hold === 1 && mouseX < width / 40) {
+  if (hold === 1 && mouseX < width / 20) {
     stage = "EXIT-CHARTS";
     wait = true;
   }
@@ -765,71 +763,83 @@ function chats() {
 function editkeys() {
   background(c("Background"));
   animation();
-    if (scroll > height / 10) {
+  if (scroll > height / 10) {
     scroll = height / 10;
   }
   if (scroll < (-height / 10) * keys.length + height / 2) {
     scroll = (-height / 10) * keys.length + height / 2;
   }
-  choosen = list(keys,height/10,scroll);
-  textAlign(CENTER,CENTER);
-  textSize(s*70);
-  text("+",width-width/14,height/20);
-  if (numpadOn){
-    number=numpad();
-    if (number){
+  choosen = list(keys, height / 10, scroll);
+  textAlign(CENTER, CENTER);
+  textSize(s * 70);
+  text("+", width - width / 14, height / 20);
+  if (numpadOn) {
+    number = numpad();
+    if (number) {
       numbers.push(number);
     }
     fill(c("Grey4"));
-    rect(width/5,height/5.5,width/1.7,height/8,20);
+    rect(width / 5, height / 5.5, width / 1.7, height / 8, 20);
     fill(c("White"));
-    text(numbers.join(" "),width/2,height/4);
-    if (numbers.length>5){
+    text(numbers.join(" "), width / 2, height / 4);
+    if (numbers.length > 5) {
       keys.push(numbers.join(""));
-      numbers=[];
-      numpadOn=false;
-      end=frameCount+50;
-      redirect="KEYS";
-      stage="LOADING";
-      storeItem("KEYS",keys);
+      numbers = [];
+      numpadOn = false;
+      end = frameCount + 50;
+      redirect = "KEYS";
+      stage = "LOADING";
+      storeItem("KEYS", keys);
       filtercharts(keys);
     }
   }
-  if (dist(width-width/14,height/20,mouseX,mouseY)<s*200 && hold===1){
-    numpadOn=true;
+  if (
+    dist(width - width / 14, height / 20, mouseX, mouseY) < s * 200 &&
+    hold === 1
+  ) {
+    numpadOn = true;
   }
-  if (choosen){
-    keymenu={
-      ky:choosen,
-      show:true
-    }
+  if (choosen) {
+    keymenu = {
+      ky: choosen,
+      show: true,
+    };
     wait = true;
   }
-  if (keymenu.show && !numpadOn){
+  if (keymenu.show && !numpadOn) {
     fill(c("White"));
-    rect(width/4,height/2-height/9,width/2,height/5,20);
-    
+    rect(width / 4, height / 2 - height / 9, width / 2, height / 5, 20);
+
     fill(c("Red"));
-    rect(width/4+10,height/10*5,width/2-20,height/12,20);
-    
-    textSize(s*25);
+    rect(width / 4 + 10, (height / 10) * 5, width / 2 - 20, height / 12, 20);
+
+    textSize(s * 25);
     fill(c("Background"));
-    text("DELETE",width/2,height/10*5.4);
-    
-    textSize(s*40);
-    text(keymenu.ky,width/2,height/10*4.5);
-         
-    if (hold===1){
-      if (button(width/4+10,height/10*5,width/2-20,height/12)&&hold===1){
-        keys.splice(keys.indexOf(keymenu.ky),1);
-        storeItem("KEYS",keys);
+    text("DELETE", width / 2, (height / 10) * 5.4);
+
+    textSize(s * 40);
+    text(keymenu.ky, width / 2, (height / 10) * 4.5);
+
+    if (hold === 1) {
+      if (
+        button(
+          width / 4 + 10,
+          (height / 10) * 5,
+          width / 2 - 20,
+          height / 12
+        ) &&
+        hold === 1
+      ) {
+        keys.splice(keys.indexOf(keymenu.ky), 1);
+        storeItem("KEYS", keys);
         filtercharts(keys);
       }
-      keymenu.show=false;      
+      keymenu.show = false;
     }
   }
   navbar();
 }
+function showleader() {}
 
 //INTERFACE
 function draw() {
@@ -853,6 +863,7 @@ function draw() {
     leaderboards();
   }
   if (stage === "LEADERBOARD") {
+    showleader();
   }
   if (stage === "CHART") {
     showchart();
