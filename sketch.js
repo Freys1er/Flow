@@ -10,7 +10,6 @@ let theme = {
 };
 
 let keys = [];
-let account = "";
 let stage = "HOME";
 
 let points = [];
@@ -18,7 +17,7 @@ let colors;
 let dark = true;
 let raw;
 let s = 0;
-let email;
+let type;
 let hold = 0;
 let end = 0;
 let sets = [];
@@ -54,21 +53,32 @@ let keymenu = {
   show: false,
 };
 
+//SIGN IN VARIABLES
+let signinstage = 0;
+let info = {
+  email: "",
+  password: "",
+  stage: "EMAIL",
+  incorrect: false,
+};
+
+//CHATS
+let chat = {
+  data: [],
+  keys: [],
+};
+let messagebox;
+
 //SETUP]
 let data = {};
 function preload() {
-  data.delta = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=552341349&single=true&output=csv",
-    "header",
-    "csv"
-  );
   data.flow = loadTable(
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1737979596&single=true&output=csv",
     "header",
     "csv"
   );
-  data.crypto = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1106526394&single=true&output=csv",
+  data.people = loadTable(
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1330105403&single=true&output=csv",
     "header",
     "csv"
   );
@@ -87,6 +97,11 @@ function preload() {
     "header",
     "csv"
   );
+  data.auth = loadTable(
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1955007359&single=true&output=csv",
+    "header",
+    "csv"
+  );
 }
 
 //MORE SETUp
@@ -100,22 +115,28 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   s = min([width, height]) / 500;
 
-  email.size(width * 0.7, height / 12);
-  email.position(width * 0.15, height / 2);
-  email.style("background-color", color(0, 0, 0, 0));
-  email.style("border-color", color(0, 0, 0, 0));
-  email.style("color", color(0, 0, 0, 0));
+  type.size(width - 10, height - 10);
+  type.position(0, 0);
+  type.style("background-color", color(0, 0, 0, 0));
+  type.style("border-color", color(0, 0, 0, 0));
+  type.style("color", color(0, 0, 0, 0));
+  
+  messagebox.position(width / 40, (height / 10) * 9);
+  messagebox.style("background-color", color(0, 0, 0, 0));
+  messagebox.style("border-color", color(0, 0, 0, 0));
+  messagebox.style("color", color(0, 0, 0, 0));
+  messagebox.hide();
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
   data = {
-    delta: data.delta.getArray(),
     flow: data.flow.getArray(),
-    crypto: data.crypto.getArray(),
+    people: data.people.getArray(),
     charts: data.charts.getArray(),
     chat: data.chat.getArray(),
     colors: data.colors,
+    auth: data.auth.getArray(),
   };
 
   s = min([width, height]) / 500;
@@ -125,14 +146,22 @@ function setup() {
     keys = [];
   }
   //SIGN IN
-  account = getItem("EMAIL");
-  email = createInput();
-  email.size(width * 0.7, height / 12);
-  email.position(width * 0.15, height / 2);
-  email.style("background-color", color(0, 0, 0, 0));
-  email.style("border-color", color(0, 0, 0, 0));
-  email.style("color", color(0, 0, 0, 0));
-  email.hide();
+  info = getItem("USER INFO");
+  type = createInput();
+  type.size(width - 10, height - 10);
+  type.position(0, 0);
+  type.style("background-color", color(0, 0, 0, 0));
+  type.style("border-color", color(0, 0, 0, 0));
+  type.style("color", color(0, 0, 0, 0));
+  type.hide();
+  
+  messagebox = createInput();
+  messagebox.size(width - width / 20, height / 12);
+  messagebox.position(width / 40, (height / 10) * 9);
+  messagebox.style("background-color", color(0, 0, 0, 0));
+  messagebox.style("border-color", color(0, 0, 0, 0));
+  messagebox.style("color", color(0, 0, 0, 0));
+  messagebox.hide();
 
   //COOKIES
   stage = getItem("PAGE");
@@ -140,7 +169,13 @@ function setup() {
     stage = "HOME";
   }
 
-  if (!account) {
+  if (!info) {
+    info = {
+      email: "",
+      password: "",
+      stage: "EMAIL",
+      incorrect: false,
+    };
     stage = "SIGN IN";
   }
 
@@ -152,12 +187,99 @@ function setup() {
 
   filtercharts(keys);
 
+  filterchats()
+  
+  print(chat);
+
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
   }
 }
 //FUNCTIONS
+function filterchats(){
+  chat = {
+    data: [],
+    keys: [],
+  };
+  for (let i = 0; i < data.chat.length; i++) {
+    if (data.chat[i][0] !== "") {
+      chat.keyy = data.chat[i][2].split("|")[1];
+      chat.message = data.chat[i][2].split("|")[0];
+      if (keys.indexOf(chat.keyy)>-1 || chat.keyy===info.email || chat.keyy==="Public"){
+        if (chat.keys.indexOf(chat.keyy) === -1) {
+          chat.keys.push(chat.keyy);
+          chat.data.push([]);
+        }
+        chat.message={
+          message:chat.message,
+          time:data.chat[i][0],
+          user:data.chat[i][1]
+        }
+        chat.data[chat.keys.indexOf(chat.keyy)].push(chat.message);
+      }
+    }
+  }
+}
+function showmessages(data) {
+  textAlign(LEFT, TOP);
+  noStroke();
+  j = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i].message !== "") {
+      if (data[i].c === "Blue") {
+        fill(c("Blue"));
+      } else {
+        fill(c("Grey3"));
+      }
+      textSize(16 * tex);
+      wid = textWidth(data[i].message);
+
+      rect(
+        w / 20 + move,
+        h - j * d - scroll.position * d,
+        wid + w / 25,
+        tex * 28,
+        60
+      );
+      fill(c("Inverse"));
+      text(
+        data[i].message,
+        w / 15 + move,
+        h - j * d + tex * 7 - scroll.position * d,
+        w,
+        h
+      );
+      textSize(12 * tex);
+      fill(255, 255, 255, map(move, 0, tex * 40, 0, 255));
+      text(
+        totime(data[i].time),
+        w / 50,
+        h - j * d + h / 100 - scroll.position * d
+      );
+    }else{
+      j-=tex*30;
+    }
+    fill(c("Inverse"));
+    if (data[i].user !== data[(i + 1) % data.length].user) {
+      text(
+        data[i].user,
+        w / 18 + move,
+        h - j * d - tex * 13 - scroll.position * d
+      );
+      j += tex * 30;
+    }
+    if (todate(data[i].time) !== todate(data[(i + 1) % data.length].time)) {
+      text(
+        todate(data[i].time),
+        w / 3 + move,
+        h - j * d - tex * 20 - scroll.position * d
+      );
+      j += tex * 30;
+    }
+    j += tex * 30;
+  }
+}
 function numpad() {
   textSize(s * 50);
   for (let i = 0; i < 9; i++) {
@@ -325,15 +447,12 @@ function navbar() {
   fill(c("White"));
   textAlign(CENTER, CENTER);
   //UI
-  textSize(90);
-  text("⌂", map(3, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  textSize(70);
-  text("🗄", map(2, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  text("⌥", map(5, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  textSize(60);
-  text("🂡", map(1, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
   textSize(50);
-  text("✉", map(4, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("⌂", map(3, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("⨹", map(2, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("⌥", map(5, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("🂡", map(1, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("⎔", map(4, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
 
   //BUTTONS
   if (
@@ -421,10 +540,14 @@ function home() {
   }
   //LOG IN
   textSize(s * 20);
-  text("Logged in as " + account, width / 2, height / 40);
+  text("Logged in as " + info.email, width / 2, height / 40);
 
   if (hold === 1 && mouseY < height / 20) {
-    account = "";
+    info = {
+      email: "",
+      password: "",
+      stage: "EMAIL",
+    };
     end = frameCount + 100;
     stage = "LOADING";
     redirect = "SIGN IN";
@@ -433,79 +556,196 @@ function home() {
 }
 
 function signin() {
-  email.show();
+  type.show();
   noStroke();
-  background(lerpColor(c("Grey"), c("White"), 0.6));
+  background("#fbfbfb");
 
-  fill(c("White"));
-  rect(width / 10, height / 10, width - width / 5, height - height / 5, 20);
-
+  textSize(s * 30);
   noFill();
   strokeWeight(1);
   stroke(c("Background"));
-  rect(width * 0.15, height / 2, width * 0.7, height / 12, 10);
+  if (info.stage === "EMAIL") {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
+  } else if (info.stage === "NEW") {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
+  } else {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 6, 10);
+  }
+  noStroke();
+  textAlign(LEFT, CENTER);
+  fill(c("Grey3"));
+  if (info.email === "") {
+    if (info.stage === "NEW") {
+      text(
+        "New Password",
+        width * 0.1,
+        height / 2 - height / 8.3,
+        width * 0.9,
+        height / 6
+      );
+    } else {
+      text(
+        "Google Email - GMail",
+        width * 0.1,
+        height / 2 - height / 8.3,
+        width * 0.9,
+        height / 6
+      );
+    }
+  } else {
+    text(
+      info.email,
+      width * 0.1,
+      height / 2 - height / 8.3,
+      width * 0.9,
+      height / 6
+    );
+  }
+  if (info.stage === "PASSWORD") {
+    noFill();
+    strokeWeight(1);
+    stroke(c("Background"));
+    line(width * 0.1, height / 2, width * 0.9, height / 2);
+    noStroke();
+    textAlign(LEFT, CENTER);
+    fill(c("Grey3"));
+    if (info.password === "") {
+      text("Password", width * 0.1, height / 2, width * 0.9, height / 12);
+    } else {
+      textSize(s * 40);
+      for (let i = 0; i < info.password.length; i++) {
+        text(
+          "•",
+          width * 0.1 + i * s * 15,
+          height / 2,
+          width * 0.9,
+          height / 12
+        );
+      }
+    }
+  }
 
   noStroke();
-  textAlign(LEFT, TOP);
-  fill(c("Background"));
-  textSize(s * 70);
-  text("Sign in", width / 6, height / 6);
-
-  textAlign(LEFT, CENTER);
-  textSize(s * 30);
-  text("To continue to Flow", width / 6, s * 80 + height / 5);
-
-  textSize(s * 20);
-  if (email.value() === "") {
-    fill(c("Grey3"));
-    text("Email or Username", width / 6, height / 1.83);
-  } else {
-    fill(c("Background"));
-    text(email.value(), width / 6, height / 1.83);
-  }
-  if (email.value().length > 5) {
-    fill(c("Blue"));
-  } else {
-    fill(c("Grey2"));
-  }
-  rect(
-    width - width / 5 + width / 10 - s * 200,
-    height - height / 4,
-    s * 150,
-    height / 12,
-    90
-  );
-
-  textSize(s * 25);
   textAlign(CENTER, CENTER);
-  fill(c("White"));
-  textStyle(BOLD);
-  text(
-    "Continue",
-    width - width / 5 + width / 10 - s * 200,
-    height - height / 4 + s * 2,
-    s * 150,
-    height / 12
-  );
-  textStyle(NORMAL);
+  fill(c("Background"));
+  textSize(s * 50);
+  if (info.incorrect) {
+    text(
+      "Incorrect Password",
+      width * 0.1,
+      height / 6,
+      width * 0.8,
+      height / 5
+    );
+  } else if (info.stage === "NEW") {
+    text("New Password", width * 0.1, height / 6, width * 0.8, height / 5);
+  } else {
+    text("Sign in with Flow", width * 0.1, height / 6, width * 0.8, height / 5);
+  }
 
+  fill(c("Blue"));
+  textSize(s * 20);
+  if (info.stage !== "NEW") {
+    text(
+      "Forgot password?",
+      width / 4,
+      height - height / 5,
+      width / 2,
+      height / 8
+    );
+  }
   if (
-    email.value().length > 5 &&
-    button(
-      width - width / 5 + width / 10 - s * 200,
-      height - height / 4,
-      s * 150,
-      height / 12
-    ) &&
-    hold === 1
+    hold === 1 &&
+    button(width / 4, height - height / 5, width / 2, height / 8)
   ) {
-    stage = "LOADING";
-    redirect = "HOME";
-    account = email.value();
-    email.hide();
-    storeItem("EMAIL", account);
-    end = frameCount + 100;
-    email.hide();
+    info.stage = "NEW";
+  }
+  //NEXT BUTTON - EMAIL
+  if (info.stage === "EMAIL" && info.email.indexOf("@rrvsd.ca") > -1) {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 - height / 25);
+
+    if (
+      dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+      hold === 1
+    ) {
+      info.stage = "PASSWORD";
+      type.value("");
+    }
+  }
+  if (info.stage === "NEW" && info.email.length > 5) {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 - height / 25);
+
+    if (
+      dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+      hold === 1
+    ) {
+      window.location.replace(
+        "https://docs.google.com/forms/d/e/1FAIpQLSfkt1Z1Uu9T7M821tRA4chC0jo2MYskrAGCxBLWE7_uI3r6RQ/viewform?usp=pp_url&entry.2039879610=" +
+          info.email
+      );
+    }
+  }
+  //NEXT BUTTON - PASSWORD
+  if (info.stage === "PASSWORD") {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 + height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 + height / 25);
+
+    if (
+      dist(width * 0.87, height / 2 + height / 25, mouseX, mouseY) < s * 30 &&
+      hold === 1
+    ) {
+      info.stage = "DONE";
+    }
+  }
+
+  if (info.stage === "PASSWORD") {
+    info.password = type.value();
+  }
+  if (info.stage === "NEW" || info.stage === "EMAIL") {
+    info.email = type.value();
+  }
+
+  if (info.stage === "DONE") {
+    let password;
+    for (let i = 0; i < data.auth.length; i++) {
+      if (data.auth[i][1] === info.email) {
+        password = data.auth[i][2];
+      }
+    }
+    if (info.password === password) {
+      info.incorrect = false;
+      stage = "LOADING";
+      redirect = "HOME";
+      storeItem("USER INFO", info);
+      end = frameCount + 10;
+      type.hide();
+      info.stage = "EMAIL";
+      type.value("");
+    } else {
+      info.incorrect = true;
+      stage = "LOADING";
+      redirect = "SIGN IN";
+      end = frameCount + 100;
+      info.stage = "EMAIL";
+      type.value("");
+    }
   }
 }
 
@@ -666,23 +906,27 @@ function leaderboards() {
 function showchart() {
   fill(c("Background"));
   rect(0, 0, width, height);
-  if (hold > 0) {
-    scroll -= (pmouseX - mouseX) * 2;
+
+  len = charts.values.length;
+  text(choosen, width / 2, height / 40);
+  if (scroll < width / 4) {
+    scroll = width / 4;
   }
-  if (scroll < 0) {
-    scroll = 0;
-  }
-  if (scroll > ((charts.values.length - 1) * width) / 4) {
-    scroll = ((charts.values.length - 1) * width) / 4;
+  if (scroll > ((len - 2) * width) / 4) {
+    scroll = ((len - 2) * width) / 4;
   }
   strokeWeight(1);
   beginShape();
-  for (let i = 0; i < charts.values.length; i++) {
+  for (let i = 0; i < len; i++) {
     if ((-i * width) / 4 + scroll + width / 2 > 0) {
       noStroke();
       fill(c("White"));
       textSize(s * 15);
-      text(charts.dates[i], width / 2 + scroll + (-i * width) / 4, height / 7);
+      text(
+        charts.dates[len - i],
+        width / 2 + scroll + (-i * width) / 4,
+        height / 7
+      );
 
       stroke(c("Grey2"));
       line(
@@ -695,7 +939,7 @@ function showchart() {
       vertex(
         (-i * width) / 4 + scroll + width / 2,
         map(
-          charts.values[i],
+          charts.values[len - i],
           10,
           0,
           height / 5,
@@ -753,13 +997,21 @@ function showchart() {
     wait = true;
   }
 }
-//https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.1118110704=CHAT NAME&entry.619223333=MESSAGE
 function chats() {
   background(c("Background"));
-
+  if (scroll > height / 10) {
+    scroll = height / 10;
+  }
+  if (scroll < (-height / 10) * chat.keys.length + height / 2) {
+    scroll = (-height / 10) * chat.keys.length + height / 2;
+  }
+  choosen=list(chat.keys,height/10,scroll);
+  if (choosen){
+    stage="VIEW CHAT";
+    messagebox.show();
+  }
   navbar();
 }
-
 function editkeys() {
   background(c("Background"));
   animation();
@@ -791,6 +1043,7 @@ function editkeys() {
       stage = "LOADING";
       storeItem("KEYS", keys);
       filtercharts(keys);
+      filterchats()
     }
   }
   if (
@@ -833,13 +1086,36 @@ function editkeys() {
         keys.splice(keys.indexOf(keymenu.ky), 1);
         storeItem("KEYS", keys);
         filtercharts(keys);
+        filterchats()
       }
       keymenu.show = false;
     }
   }
   navbar();
 }
-function showleader() {}
+function viewchat(){
+  background(c("Background"));
+  strokeWeight(2);
+  stroke(c("White"));
+  fill(lerpColor(c(theme.navbar), color(0, 0, 0), 0.8));
+  rect(width / 40, (height / 10) * 9, width - width / 20, height / 12, 100);
+  fill(c("Blue"))
+  ellipse(width/40+width-width/10,height/10*9.4,height / 12,height / 12);
+  
+  textSize(s*25);
+  textAlign(LEFT,CENTER);
+  noStroke();
+  fill(c("White"));
+  text(messagebox.value(),width / 20, (height / 10) * 9.1, width - width / 20, height / 12);
+  textAlign(CENTER, CENTER);
+  text("✈︎", width/40+width-width/10,height/10*9.4);
+  
+  if (dist(width/40+width-width/10,height/10*9.4,mouseX,mouseY)<height/20&&hold===1){
+    chat.send=messagebox.value()+"|"+choosen;
+    window.location.replace("https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.619223333="+chat.send);
+  }
+  showmessages(chat.data[chat.keys.indexOf(choosen)]);
+}
 
 //INTERFACE
 function draw() {
@@ -862,9 +1138,6 @@ function draw() {
   if (stage === "CHARTS") {
     leaderboards();
   }
-  if (stage === "LEADERBOARD") {
-    showleader();
-  }
   if (stage === "CHART") {
     showchart();
   }
@@ -873,6 +1146,9 @@ function draw() {
   }
   if (stage === "KEYS") {
     editkeys();
+  }
+  if (stage === "VIEW CHAT"){
+    viewchat();
   }
 
   //EXITS
