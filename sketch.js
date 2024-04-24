@@ -68,6 +68,7 @@ let chat = {
   keys: [],
 };
 let messagebox;
+let move=0;
 
 //SETUP]
 let data = {};
@@ -188,8 +189,6 @@ function setup() {
   filtercharts(keys);
 
   filterchats()
-  
-  print(chat);
 
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
@@ -197,6 +196,10 @@ function setup() {
   }
 }
 //FUNCTIONS
+function todate(x){
+  x=x.split(" ")[0].split("/");
+  return ["January","Febuary","March","April","May","June","July","August","September","October","November","December"][int(x[0])-1]+" "+x[1]+", "+x[2];
+}
 function filterchats(){
   chat = {
     data: [],
@@ -204,8 +207,8 @@ function filterchats(){
   };
   for (let i = 0; i < data.chat.length; i++) {
     if (data.chat[i][0] !== "") {
-      chat.keyy = data.chat[i][2].split("|")[1];
-      chat.message = data.chat[i][2].split("|")[0];
+      chat.keyy = data.chat[i][2].split("~")[1];
+      chat.message = data.chat[i][2].split("~")[0];
       if (keys.indexOf(chat.keyy)>-1 || chat.keyy===info.email || chat.keyy==="Public"){
         if (chat.keys.indexOf(chat.keyy) === -1) {
           chat.keys.push(chat.keyy);
@@ -219,65 +222,6 @@ function filterchats(){
         chat.data[chat.keys.indexOf(chat.keyy)].push(chat.message);
       }
     }
-  }
-}
-function showmessages(data) {
-  textAlign(LEFT, TOP);
-  noStroke();
-  j = 0;
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].message !== "") {
-      if (data[i].c === "Blue") {
-        fill(c("Blue"));
-      } else {
-        fill(c("Grey3"));
-      }
-      textSize(16 * tex);
-      wid = textWidth(data[i].message);
-
-      rect(
-        w / 20 + move,
-        h - j * d - scroll.position * d,
-        wid + w / 25,
-        tex * 28,
-        60
-      );
-      fill(c("Inverse"));
-      text(
-        data[i].message,
-        w / 15 + move,
-        h - j * d + tex * 7 - scroll.position * d,
-        w,
-        h
-      );
-      textSize(12 * tex);
-      fill(255, 255, 255, map(move, 0, tex * 40, 0, 255));
-      text(
-        totime(data[i].time),
-        w / 50,
-        h - j * d + h / 100 - scroll.position * d
-      );
-    }else{
-      j-=tex*30;
-    }
-    fill(c("Inverse"));
-    if (data[i].user !== data[(i + 1) % data.length].user) {
-      text(
-        data[i].user,
-        w / 18 + move,
-        h - j * d - tex * 13 - scroll.position * d
-      );
-      j += tex * 30;
-    }
-    if (todate(data[i].time) !== todate(data[(i + 1) % data.length].time)) {
-      text(
-        todate(data[i].time),
-        w / 3 + move,
-        h - j * d - tex * 20 - scroll.position * d
-      );
-      j += tex * 30;
-    }
-    j += tex * 30;
   }
 }
 function numpad() {
@@ -1095,6 +1039,49 @@ function editkeys() {
 }
 function viewchat(){
   background(c("Background"));
+  let messages = chat.data[chat.keys.indexOf(choosen)];
+  let j = scroll;
+  let date = "";
+  let person = "";
+
+  for (let i = 0;i<messages.length;i++){
+    fill(c("White"));
+    if (date !== todate(messages[i].time)){
+      textAlign(CENTER,CENTER);
+      textSize(s*15);
+      text(todate(messages[i].time),width/2,j+height/30);
+      j+=height/20;
+      textAlign(LEFT,CENTER);
+    }
+    if (person !== messages[i].user){
+      textSize(s*15);
+      text(messages[i].user,width/35,j+height/30);
+      j+=height/20;
+    }
+    
+    textAlign(LEFT,CENTER);
+    textSize(s*20);
+    wid = textWidth(messages[i].message);
+    fill(c("Blue"));
+    rect(width/40,j,wid+width/25,height/15,20);
+    fill(c("White"));
+    text(messages[i].message,width/25,j,wid+width/10,height/13);
+    j+=height/14;
+    
+    
+    person = messages[i].user;
+    date = todate(messages[i].time);
+    
+  }
+  size=j-scroll;
+  
+  if (scroll>0){
+    scroll=0;
+  }
+  if (scroll<height/2-size){
+    scroll=height/2-size;
+  }
+  
   strokeWeight(2);
   stroke(c("White"));
   fill(lerpColor(c(theme.navbar), color(0, 0, 0), 0.8));
@@ -1111,10 +1098,19 @@ function viewchat(){
   text("✈︎", width/40+width-width/10,height/10*9.4);
   
   if (dist(width/40+width-width/10,height/10*9.4,mouseX,mouseY)<height/20&&hold===1){
-    chat.send=messagebox.value()+"|"+choosen;
+    chat.send=messagebox.value()+"~"+choosen;
     window.location.replace("https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.619223333="+chat.send);
   }
-  showmessages(chat.data[chat.keys.indexOf(choosen)]);
+  
+  fill(c("Grey4"));
+  noStroke();
+  rect(width / 80, height / 4, width / 180, height / 2, 20);
+  rect(width / 40, height / 4, width / 180, height / 2, 20);
+
+  if (hold === 1 && mouseX < width / 20) {
+    stage = "CHATS";
+    wait = true;
+  }
 }
 
 //INTERFACE
