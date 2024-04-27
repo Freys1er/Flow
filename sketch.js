@@ -9,7 +9,7 @@ let theme = {
   clock: "Analogue",
 };
 
-let stage;
+let stage = "FLOW";
 let choosen = null;
 let points = [];
 let dark = true;
@@ -39,6 +39,11 @@ let ans = false;
 let streak = 0;
 let qanda = 0;
 let start = 0;
+let search = "";
+let glide = {
+  info: 0,
+  up: true
+};
 
 //SIGN IN VARIABLES
 let signinstage = 0;
@@ -48,7 +53,6 @@ let info = {
   stage: "EMAIL",
   incorrect: false,
 };
-
 
 let data = {};
 function preload() {
@@ -70,7 +74,7 @@ function preload() {
 }
 
 //MORE SETUp
-function filtersets(x) {
+function filtersets(term) {
   h.recent = getItem("Recent_Sets");
   if (!h.recent) {
     h.recent = [];
@@ -82,13 +86,15 @@ function filtersets(x) {
   h.colors = [];
 
   for (let i = 0; i < data.flow.length; i++) {
-    x = data.flow[i][2].toUpperCase().split(" ");
-    for (let j = 0; j < x.length; j++) {
-      if (h.keys.indexOf(x[j]) === -1) {
-        h.keys.push(x[j]);
-        h.r.push([]);
+    if (data.flow[i].join("").indexOf(term) > -1) {
+      x = data.flow[i][2].toUpperCase().split(" ");
+      for (let j = 0; j < x.length; j++) {
+        if (h.keys.indexOf(x[j]) === -1) {
+          h.keys.push(x[j]);
+          h.r.push([]);
+        }
+        h.r[h.keys.indexOf(x[j])].push(data.flow[i][2]);
       }
-      h.r[h.keys.indexOf(x[j])].push(data.flow[i][2]);
     }
   }
 
@@ -120,12 +126,6 @@ function mouseWheel(event) {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   s = min([width, height]) / 500;
-
-  type.size(width - 10, height - 10);
-  type.position(0, 0);
-  type.style("background-color", color(0, 0, 0, 0));
-  type.style("border-color", color(0, 0, 0, 0));
-  type.style("color", color(0, 0, 0, 0));
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -137,25 +137,19 @@ function setup() {
     colors: data.colors,
     auth: data.auth.getArray(),
   };
+  glide.info=(height / 5) * 2;
 
   s = min([width, height]) / 500;
 
   //SIGN IN
   info = getItem("USER INFO");
   type = createInput();
-  type.size(width - 10, height - 10);
-  type.position(0, 0);
   type.style("background-color", color(0, 0, 0, 0));
   type.style("border-color", color(0, 0, 0, 0));
   type.style("color", color(0, 0, 0, 0));
-  type.hide();
+  type.value(" ");
 
   //COOKIES
-  stage = getItem("PAGE");
-  if (!stage) {
-    stage = "FLOW";
-  }
-
   if (!info) {
     info = {
       email: "",
@@ -231,7 +225,6 @@ function animation() {
 function button(x, y, w, h) {
   return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + h;
 }
-
 
 //COLORS
 function c(x) {
@@ -362,8 +355,8 @@ function signin() {
 
     if (
       key === "Enter" ||
-      dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
-      hold === 1
+      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+        hold === 1)
     ) {
       info.stage = "PASSWORD";
       type.value("");
@@ -472,12 +465,15 @@ function saverecent() {
   h.recent.splice(0, 0, choosen);
   storeItem("Recent_Sets", h.recent);
 }
-
 function flow() {
   background(c("Background"));
   animation();
-  
-  if (mouseY<height/10 && hold===1) {
+  if (search !== type.value()) {
+    search = type.value();
+    filtersets(search);
+  }
+
+  if (mouseY < height / 10 && hold === 1) {
     info = {
       email: "",
       password: "",
@@ -486,7 +482,7 @@ function flow() {
     };
     stage = "SIGN IN";
   }
-  
+
   fill(c("Inverse"));
   textSize(s * 20);
   text(
@@ -509,26 +505,36 @@ function flow() {
   stroke(c("Grey"));
   noFill();
   strokeWeight(2);
-  rect(s * 20, scroll - height/2.3, width - s * 40, height / 3, 20);
-  
-  if (button(s * 20, scroll - height/2.3, width - s * 40, height / 3) && hold===1){
-    dark=!dark;    
-  }
+  rect(s * 20, scroll - height / 2.3, width - s * 40, height / 3, 20);
+
+  type.size(width - s * 40, height / 3);
+  type.position(s * 20, scroll - height / 2.3);
 
   noStroke();
   fill(c("Inverse"));
-  textSize(s * 80);
-  if (hour() < 12) {
+  textSize(s * 120);
+  if (minute() < 10) {
     text(
-      "Good Morning",
-      s * 20, scroll - height/2.3, width - s * 40, height / 3
+      hour() + ":0" + minute(),
+      s * 20,
+      scroll - height / 2.3,
+      width - s * 40,
+      height / 3
     );
   } else {
     text(
-      "Good Evening",
-      s * 20, scroll - height/2.3, width - s * 40, height / 3
+      hour() + ":" + minute(),
+      s * 20,
+      scroll - height / 2.3,
+      width - s * 40,
+      height / 3
     );
   }
+  textSize(s*30);
+  text(type.value(),s * 20,
+      scroll - height / 3.2,
+      width - s * 40,
+      height / 3);
 
   textSize(s * 25);
 
@@ -553,10 +559,10 @@ function flow() {
       noStroke();
 
       if (
-        !wait &&
+        glide.info+100>(height / 5) * 2 &&
         !h.menu &&
         hold > 0 &&
-        hold < 10 &&
+        hold < 5 &&
         button(
           j * s * 220 + h.scroll[i],
           i * s * 170 + scroll,
@@ -566,6 +572,8 @@ function flow() {
         !mouseIsPressed
       ) {
         choosen = h.names[i][j];
+        glide.up=false;
+        glide.info=(height / 5) * 2;
       }
 
       textAlign(CENTER, CENTER);
@@ -597,44 +605,52 @@ function flow() {
       h.scroll[i] = s * 50;
     }
   }
-
   if (choosen && stage !== "EXIT-FLOW") {
+    if (glide.info<(height / 5) * 2 && glide.up){
+      glide.info+=50;
+    }
+    if (glide.info>0 && !glide.up){
+      glide.info-=50;
+    }
+    if (!button(0, (height / 5) * 3, width, height) && hold===1){
+      glide.up=true;
+    }
+    if (glide.info===(height / 5) * 2 && glide.up){
+      choosen="";
+    }
+    fill(0, 0, 0, map(glide.info,0,(height / 5) * 2,200,0));
+    rect(0, 0, width, height);
+    
+    
+    
+    push();
+    translate(0,glide.info);
+    noStroke();
     stroke(c("Inverse"));
     fill(c("Background"));
     rect(0, (height / 5) * 3, width, height, 20);
+
+    fill(c("Grey"));
     rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
     noFill();
-    rect(width / 10, (height / 20) * 15, width - width / 5, height / 8, 10);
-    rect(
-      width / 10,
-      (height / 20) * 18,
-      width / 2 - width / 8,
-      height / 15,
-      10
-    );
-    rect(
-      width / 1.9,
-      (height / 20) * 18,
-      width / 2 - width / 8,
-      height / 15,
-      10
-    );
+    rect(width * 0.08, (height / 21) * 15, width / 4, height / 4, 10);
+    rect(width * 0.38, (height / 21) * 15, width / 4, height / 4, 10);
+    rect(width * 0.68, (height / 21) * 15, width / 4, height / 4, 10);
 
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(s * 30);
     fill(c("Inverse"));
     text(choosen, 0, (height / 5) * 3, width, height / 6);
-    text(
-      "Flashcards",
-      width / 10,
-      (height / 20) * 15,
-      width - width / 5,
-      height / 8
-    );
 
+    textSize(s * 20);
+    text("Flashcards", width * 0.08, (height / 21) * 15, width / 4, height / 4);
+    text("Notes", width * 0.38, (height / 21) * 15, width / 4, height / 4);
+    text("Test", width * 0.68, (height / 21) * 15, width / 4, height / 4);
+    pop();
+    
     if (
-      button(width / 10, (height / 20) * 15, width - width / 5, height / 8) &&
+      button(width * 0.08, (height / 21) * 15, width / 4, height / 4) &&
       hold === 1
     ) {
       for (let i = 0; i < data.flow.length; i++) {
@@ -646,12 +662,7 @@ function flow() {
 
       saverecent(choosen);
     }
-
-    if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
-      choosen = null;
-      wait = true;
-    }
-  } 
+  }
 }
 
 function flashcards() {
@@ -725,18 +736,23 @@ function draw() {
   textFont("Roboto");
   if (stage === "SIGN IN") {
     signin();
+    type.show();
   }
   if (stage === "LOADING") {
     loading();
+    type.hide();
   }
   if (stage === "FLOW") {
     flow();
+    type.show();
   }
   if (stage === "FLASHCARDS") {
     flashcards();
+    type.hide();
   }
-  
+
   if (stage === "EXIT-FLOW") {
+    type.hide();
     flow();
     push();
     translate(mouseX, 0);
