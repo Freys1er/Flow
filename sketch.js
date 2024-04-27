@@ -11,7 +11,7 @@ let theme = {
 
 let keys = [];
 let stage = "HOME";
-
+let choosen = null;
 let points = [];
 let colors;
 let dark = true;
@@ -26,6 +26,14 @@ let scroll = 0;
 let redirect = "HOME";
 
 //FLASHCARDS
+let h = {
+  keys: [],
+  titles: [],
+  names: [],
+  r: [],
+  scroll: [],
+  menu: false,
+};
 let file;
 let shift = 0;
 let index = 0;
@@ -68,7 +76,9 @@ let chat = {
   keys: [],
 };
 let messagebox;
-let move=0;
+let move = 0;
+let messages;
+let newchat = false;
 
 //SETUP]
 let data = {};
@@ -106,11 +116,62 @@ function preload() {
 }
 
 //MORE SETUp
+function filtersets(x) {
+  h.keys = [];
+  h.titles = [];
+  h.names = [];
+  h.r = [];
+  h.colors = [];
+
+  for (let i = 0; i < data.flow.length; i++) {
+    x = data.flow[i][2].toUpperCase().split(" ");
+    for (let j = 0; j < x.length; j++) {
+      if (h.keys.indexOf(x[j]) === -1) {
+        h.keys.push(x[j]);
+        h.r.push([]);
+      }
+      h.r[h.keys.indexOf(x[j])].push(data.flow[i][2]);
+    }
+  }
+
+  for (let i = 100; i > 0; i--) {
+    for (let j = 0; j < h.keys.length; j++) {
+      if (h.r[j].length === i && h.keys[j].length > 2) {
+        h.titles.push(h.keys[j]);
+        h.names.push(h.r[j]);
+        h.scroll.push(s * 50);
+        h.colors.push(
+          color(random(200, 255), random(200, 255), random(200, 255))
+        );
+      }
+    }
+  }
+}
+function shiftChar(inputString, amount) {
+  let shiftedString = "";
+  for (let i = 0; i < inputString.length; i++) {
+    let charCode = inputString.charCodeAt(i);
+    let shiftedCharCode = charCode - amount; // Shift the character code upward
+    let shiftedChar = String.fromCharCode(shiftedCharCode);
+    shiftedString += shiftedChar;
+  }
+  return shiftedString;
+}
+// Hash function for a given message
+function hashMessage(message) {
+  let hash = 0;
+  for (let i = 0; i < message.length; i++) {
+    // Get the ASCII value of each character
+    const charCode = message.charCodeAt(i);
+    // Combine the character codes
+    hash = (hash << 5) - hash + charCode;
+  }
+  // Ensure the hash is positive
+  return str(Math.abs(hash));
+}
+
 function mouseWheel(event) {
   scroll -= event.delta;
-}
-function mouseDragged() {
-  scroll -= pmouseY - mouseY;
 }
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -121,7 +182,7 @@ function windowResized() {
   type.style("background-color", color(0, 0, 0, 0));
   type.style("border-color", color(0, 0, 0, 0));
   type.style("color", color(0, 0, 0, 0));
-  
+
   messagebox.position(width / 40, (height / 10) * 9);
   messagebox.style("background-color", color(0, 0, 0, 0));
   messagebox.style("border-color", color(0, 0, 0, 0));
@@ -131,6 +192,8 @@ function windowResized() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+ textStyle(BOLD);
+  
   data = {
     flow: data.flow.getArray(),
     people: data.people.getArray(),
@@ -155,7 +218,7 @@ function setup() {
   type.style("border-color", color(0, 0, 0, 0));
   type.style("color", color(0, 0, 0, 0));
   type.hide();
-  
+
   messagebox = createInput();
   messagebox.size(width - width / 20, height / 12);
   messagebox.position(width / 40, (height / 10) * 9);
@@ -188,7 +251,9 @@ function setup() {
 
   filtercharts(keys);
 
-  filterchats()
+  filtersets();
+
+  filterchats();
 
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
@@ -196,63 +261,59 @@ function setup() {
   }
 }
 //FUNCTIONS
-function todate(x){
-  x=x.split(" ")[0].split("/");
-  return ["January","Febuary","March","April","May","June","July","August","September","October","November","December"][int(x[0])-1]+" "+x[1]+", "+x[2];
+function todate(x) {
+  x = x.split(" ")[0].split("/");
+  return (
+    [
+      "January",
+      "Febuary",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ][int(x[0]) - 1] +
+    " " +
+    x[1] +
+    ", " +
+    x[2]
+  );
 }
-function filterchats(){
+function filterchats() {
   chat = {
     data: [],
     keys: [],
   };
+  for (let i = 0; i < keys.length; i++) {
+    chat.data.push([]);
+    chat.keys.push(keys[i]);
+  }
   for (let i = 0; i < data.chat.length; i++) {
     if (data.chat[i][0] !== "") {
-      chat.keyy = data.chat[i][2].split("~")[1];
-      chat.message = data.chat[i][2].split("~")[0];
-      if (keys.indexOf(chat.keyy)>-1 || chat.keyy===info.email || chat.keyy==="Public"){
+      decoded = shiftChar(data.chat[i][2], -5);
+      chat.keyy = decoded.split("~")[1];
+      chat.message = decoded.split("~")[0];
+      if (
+        keys.indexOf(chat.keyy) > -1 ||
+        chat.keyy === info.email ||
+        chat.keyy === "Public"
+      ) {
         if (chat.keys.indexOf(chat.keyy) === -1) {
           chat.keys.push(chat.keyy);
           chat.data.push([]);
         }
-        chat.message={
-          message:chat.message,
-          time:data.chat[i][0],
-          user:data.chat[i][1]
-        }
+        chat.message = {
+          message: chat.message,
+          time: data.chat[i][0],
+          user: data.chat[i][1],
+        };
         chat.data[chat.keys.indexOf(chat.keyy)].push(chat.message);
       }
-    }
-  }
-}
-function numpad() {
-  textSize(s * 50);
-  for (let i = 0; i < 9; i++) {
-    fill(lerpColor(c("White"), color(255, 255, 255, 0), 0.8));
-    ellipse(
-      ((i % 3) * width) / 4 + width / 4,
-      (floor(i / 3) * height) / 7 + height / 2,
-      s * 100,
-      s * 100
-    );
-    fill(c("White"));
-    text(
-      i + 1,
-      ((i % 3) * width) / 4 + width / 4,
-      (floor(i / 3) * height) / 7 + height / 2
-    );
-  }
-  for (let i = 0; i < 9; i++) {
-    if (
-      dist(
-        ((i % 3) * width) / 4 + width / 4,
-        (floor(i / 3) * height) / 7 + height / 2,
-        mouseX,
-        mouseY
-      ) <
-        s * 50 &&
-      hold === 1
-    ) {
-      return i + 1;
     }
   }
 }
@@ -632,12 +693,13 @@ function signin() {
     text("➜", width * 0.87, height / 2 - height / 25);
 
     if (
-      dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
-      hold === 1
+      key === "Enter" ||
+      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+        hold === 1)
     ) {
       window.location.replace(
         "https://docs.google.com/forms/d/e/1FAIpQLSfkt1Z1Uu9T7M821tRA4chC0jo2MYskrAGCxBLWE7_uI3r6RQ/viewform?usp=pp_url&entry.2039879610=" +
-          info.email
+          hashMessage(info.email)
       );
     }
   }
@@ -673,7 +735,9 @@ function signin() {
         password = data.auth[i][2];
       }
     }
-    if (info.password === password) {
+    print(password);
+    print(hashMessage(info.password));
+    if (hashMessage(info.password) === password) {
       info.incorrect = false;
       stage = "LOADING";
       redirect = "HOME";
@@ -715,6 +779,8 @@ function loading() {
 
 function flow() {
   background(c("Background"));
+  animation();
+  fill(c("Inverse"));
   textSize(s * 20);
   text(
     floor(total.reduce((a, b) => a + b) - 10000 / (frameCount - start) / 10) +
@@ -722,22 +788,111 @@ function flow() {
     width / 2,
     height / 40
   );
+
+  if (abs(mouseX - pmouseX) < abs(mouseY - pmouseY) && mouseIsPressed) {
+    scroll -= pmouseY - mouseY;
+  }
   if (scroll > height / 10) {
     scroll = height / 10;
   }
-  if (scroll < (-height / 10) * sets.length + height / 2) {
-    scroll = (-height / 10) * sets.length + height / 2;
+  if (scroll < -s * 170 * h.titles.length+height/2) {
+    scroll = -s * 170 * h.titles.length+height/2;
   }
-  choosen = list(sets, height / 10, scroll, total);
-  if (choosen) {
-    for (let i = 0; i < data.flow.length; i++) {
-      if (data.flow[i][2] === choosen) {
-        file = data.flow[i][3].split("#");
+
+  for (let i = 0; i < h.titles.length; i++) {
+    textAlign(LEFT, CENTER);
+    fill(h.colors[i]);
+    text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
+    for (let j = 0; j < h.names[i].length; j++) {
+      fill(h.colors[i]);
+      if (choosen === h.names[i][j]) {
+        strokeWeight(s * 50);
+        stroke(h.colors[i]);
+      }
+      rect(
+        j * s * 220 + h.scroll[i],
+        i * s * 170 + scroll,
+        s * 190,
+        s * 100,
+        20
+      );
+      noStroke();
+
+      if (
+        !wait &&
+        !h.menu &&
+        hold > 0 &&
+        hold < 5 &&
+        button(
+          j * s * 220 + h.scroll[i],
+          i * s * 170 + scroll,
+          s * 190,
+          s * 100
+        ) &&
+        !mouseIsPressed
+      ) {
+        choosen = h.names[i][j];
+      }
+
+      textAlign(CENTER, CENTER);
+      fill(c("Background"));
+      text(
+        h.names[i][j],
+        j * s * 220 + h.scroll[i],
+        i * s * 170 + scroll,
+        s * 180,
+        s * 100
+      );
+    }
+    if (
+      mouseIsPressed &&
+      mouseY > i * s * 170 + scroll &&
+      mouseY < i * s * 170 + scroll + s * 170 &&
+      abs(mouseX - pmouseX) > abs(mouseY - pmouseY)
+    ) {
+      h.scroll[i] += mouseX - pmouseX;
+      if (h.scroll[i] < -h.names[i].length * s * 220 + s * 300) {
+        h.scroll[i] = -h.names[i].length * s * 220 + s * 300;
       }
     }
-    stage = "FLASHCARDS";
+    if (h.scroll[i] > s * 50) {
+      h.scroll[i] = s * 50;
+    }
   }
-  navbar();
+
+  if (choosen && stage !== "EXIT-FLOW") {
+    fill(c("Grey"));
+    rect(0, (height / 5) * 3, width, height, 20);
+    fill(c("Grey4"));
+    rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
+    
+    fill(c("Grey2"));
+    rect(width/10, (height / 20) * 15, width-width/5, height/8,10);
+    rect(width/10, (height / 20) * 18, width/2-width/8, height/15,10);
+    rect(width/1.9, (height / 20) * 18, width/2-width/8, height/15,10);
+    
+    textAlign(CENTER,CENTER);
+    textSize(s*30);
+    fill(c("Background"));
+    text(choosen,0, (height / 5) * 3, width, height/6);
+    text("Flashcards",width/10, (height / 20) * 15, width-width/5, height/8);
+
+    if (button(width/10, (height / 20) * 15, width-width/5, height/8) && hold===1) {
+      for (let i = 0; i < data.flow.length; i++) {
+        if (data.flow[i][2] === choosen) {
+          file = data.flow[i][3].split("#");
+        }
+      }
+      stage = "FLASHCARDS";
+    }
+
+    if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
+      choosen = null;
+      wait = true;
+    }
+  } else {
+    navbar();
+  }
 }
 
 function flashcards() {
@@ -816,6 +971,9 @@ function leaderboards() {
     width / 2,
     height / 40
   );
+  if (hold>0){
+    scroll -= pmouseY - mouseY;
+  }
   if (scroll > height / 10) {
     scroll = height / 10;
   }
@@ -853,6 +1011,9 @@ function showchart() {
 
   len = charts.values.length;
   text(choosen, width / 2, height / 40);
+  if (hold>0){
+    scroll -= pmouseY - mouseY;
+  }
   if (scroll < width / 4) {
     scroll = width / 4;
   }
@@ -920,8 +1081,9 @@ function showchart() {
   text("VOTE", width / 2, height - height / 12);
 
   if (
-    hold === 1 &&
-    button(width / 4, height - height / 8, width / 2, height / 12)
+    key === "Enter" ||
+    (hold === 1 &&
+      button(width / 4, height - height / 8, width / 2, height / 12))
   ) {
     window.location.replace(
       "https://docs.google.com/forms/d/e/1FAIpQLSdvtosvQ3nNgq-YKbzfVIuObONqYFKBPWyKndm7tlYN5LEGvQ/viewform?entry.1418346935=" +
@@ -943,15 +1105,19 @@ function showchart() {
 }
 function chats() {
   background(c("Background"));
+  if (hold>0){
+    scroll -= pmouseY - mouseY;
+  }
   if (scroll > height / 10) {
     scroll = height / 10;
   }
   if (scroll < (-height / 10) * chat.keys.length + height / 2) {
     scroll = (-height / 10) * chat.keys.length + height / 2;
   }
-  choosen=list(chat.keys,height/10,scroll);
-  if (choosen){
-    stage="VIEW CHAT";
+  choosen = list(chat.keys, height / 10, scroll);
+  if (choosen) {
+    stage = "VIEW CHAT";
+    messages = chat.data[chat.keys.indexOf(choosen)];
     messagebox.show();
   }
   navbar();
@@ -959,6 +1125,9 @@ function chats() {
 function editkeys() {
   background(c("Background"));
   animation();
+  if (hold>0){
+    scroll -= pmouseY - mouseY;
+  }
   if (scroll > height / 10) {
     scroll = height / 10;
   }
@@ -970,25 +1139,26 @@ function editkeys() {
   textSize(s * 70);
   text("+", width - width / 14, height / 20);
   if (numpadOn) {
-    number = numpad();
-    if (number) {
-      numbers.push(number);
-    }
+    textSize(s * 30);
+    type.show();
     fill(c("Grey4"));
     rect(width / 5, height / 5.5, width / 1.7, height / 8, 20);
     fill(c("White"));
-    text(numbers.join(" "), width / 2, height / 4);
-    if (numbers.length > 5) {
-      keys.push(numbers.join(""));
-      numbers = [];
+    text(type.value(), width / 2, height / 4);
+    if (key === "Enter") {
+      keys.push(type.value());
+      type.value("");
+      type.hide();
       numpadOn = false;
       end = frameCount + 50;
       redirect = "KEYS";
       stage = "LOADING";
       storeItem("KEYS", keys);
       filtercharts(keys);
-      filterchats()
+      filterchats();
     }
+  } else {
+    type.hide();
   }
   if (
     dist(width - width / 14, height / 20, mouseX, mouseY) < s * 200 &&
@@ -1030,85 +1200,109 @@ function editkeys() {
         keys.splice(keys.indexOf(keymenu.ky), 1);
         storeItem("KEYS", keys);
         filtercharts(keys);
-        filterchats()
+        filterchats();
       }
       keymenu.show = false;
     }
   }
   navbar();
 }
-function viewchat(){
+function viewchat() {
   background(c("Background"));
-  let messages = chat.data[chat.keys.indexOf(choosen)];
   let j = scroll;
   let date = "";
   let person = "";
-
-  for (let i = 0;i<messages.length;i++){
+  if (hold>0){
+    scroll -= pmouseY - mouseY;
+  }
+  for (let i = 0; i < messages.length; i++) {
     fill(c("White"));
-    if (date !== todate(messages[i].time)){
-      textAlign(CENTER,CENTER);
-      textSize(s*15);
-      text(todate(messages[i].time),width/2,j+height/30);
-      j+=height/20;
-      textAlign(LEFT,CENTER);
+    if (date !== todate(messages[i].time)) {
+      textAlign(CENTER, CENTER);
+      textSize(s * 15);
+      text(todate(messages[i].time), width / 2, j + height / 30);
+      j += s * 50;
+      textAlign(LEFT, CENTER);
     }
-    if (person !== messages[i].user){
-      textSize(s*15);
-      text(messages[i].user,width/35,j+height/30);
-      j+=height/20;
+    if (person !== messages[i].user) {
+      textSize(s * 15);
+      text(messages[i].user, width / 35, j + height / 30);
+      j += s * 50;
     }
-    
-    textAlign(LEFT,CENTER);
-    textSize(s*20);
+
+    textAlign(LEFT, CENTER);
+    textSize(s * 20);
     wid = textWidth(messages[i].message);
     fill(c("Blue"));
-    rect(width/40,j,wid+width/25,height/15,20);
+    rect(width / 40, j - s * 8, wid + width / 25, s * 35, 20);
     fill(c("White"));
-    text(messages[i].message,width/25,j,wid+width/10,height/13);
-    j+=height/14;
-    
-    
+    text(messages[i].message, width / 25, j, wid + width / 10, s * 22);
+    j += s * 40;
+
     person = messages[i].user;
     date = todate(messages[i].time);
-    
   }
-  size=j-scroll;
-  
-  if (scroll>0){
-    scroll=0;
+  size = j - scroll;
+
+  if (scroll > 0) {
+    scroll = 0;
   }
-  if (scroll<height/2-size){
-    scroll=height/2-size;
+  if (scroll < height / 2 - size) {
+    scroll = height / 2 - size;
   }
-  
+
   strokeWeight(2);
   stroke(c("White"));
   fill(lerpColor(c(theme.navbar), color(0, 0, 0), 0.8));
   rect(width / 40, (height / 10) * 9, width - width / 20, height / 12, 100);
-  fill(c("Blue"))
-  ellipse(width/40+width-width/10,height/10*9.4,height / 12,height / 12);
-  
-  textSize(s*25);
-  textAlign(LEFT,CENTER);
+  fill(c("Blue"));
+  ellipse(
+    width / 40 + width - width / 10,
+    (height / 10) * 9.4,
+    height / 12,
+    height / 12
+  );
+
+  textSize(s * 25);
+  textAlign(LEFT, CENTER);
   noStroke();
   fill(c("White"));
-  text(messagebox.value(),width / 20, (height / 10) * 9.1, width - width / 20, height / 12);
+  text(
+    messagebox.value(),
+    width / 20,
+    (height / 10) * 9.1,
+    width - width / 20,
+    height / 12
+  );
   textAlign(CENTER, CENTER);
-  text("✈︎", width/40+width-width/10,height/10*9.4);
-  
-  if (dist(width/40+width-width/10,height/10*9.4,mouseX,mouseY)<height/20&&hold===1){
-    chat.send=messagebox.value()+"~"+choosen;
-    window.location.replace("https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.619223333="+chat.send);
+  text("✈︎", width / 40 + width - width / 10, (height / 10) * 9.4);
+
+  if (
+    key === "Enter" ||
+    (dist(
+      width / 40 + width - width / 10,
+      (height / 10) * 9.4,
+      mouseX,
+      mouseY
+    ) <
+      height / 20 &&
+      hold === 1)
+  ) {
+    chat.send = messagebox.value() + "~" + choosen;
+    chat.send = shiftChar(chat.send, 5);
+    window.location.replace(
+      "https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.619223333=" +
+        chat.send
+    );
   }
-  
+
   fill(c("Grey4"));
   noStroke();
   rect(width / 80, height / 4, width / 180, height / 2, 20);
   rect(width / 40, height / 4, width / 180, height / 2, 20);
 
   if (hold === 1 && mouseX < width / 20) {
-    stage = "CHATS";
+    stage = "EXIT-CHAT";
     wait = true;
   }
 }
@@ -1143,11 +1337,30 @@ function draw() {
   if (stage === "KEYS") {
     editkeys();
   }
-  if (stage === "VIEW CHAT"){
+  if (stage === "VIEW CHAT") {
     viewchat();
+  }
+  if (stage === "FLOW-INFO") {
+    flowinfo();
   }
 
   //EXITS
+  if (stage === "EXIT-CHAT") {
+    chats();
+    push();
+    translate(mouseX, 0);
+    viewchat();
+    pop();
+    if (hold === 0) {
+      if (mouseX < width / 2) {
+        stage = "VIEW CHAT";
+      } else {
+        file = null;
+        messagebox.hide();
+        stage = "CHATS";
+      }
+    }
+  }
   if (stage === "EXIT-FLOW") {
     flow();
     push();
@@ -1159,6 +1372,7 @@ function draw() {
         stage = "FLASHCARDS";
       } else {
         file = null;
+        choosen = null;
         stage = "FLOW";
       }
     }
