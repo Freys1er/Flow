@@ -806,7 +806,7 @@ function flow() {
   stroke(c("Grey"));
   noFill();
   strokeWeight(2);
-  rect(s * 20, scroll - s * 400, width - s * 40, height / 2 - s * 150, 20);
+  rect(s * 20, scroll - height/2.3, width - s * 40, height / 3, 20);
 
   noStroke();
   fill(c("Inverse"));
@@ -814,18 +814,12 @@ function flow() {
   if (hour() < 12) {
     text(
       "Good Morning",
-      s * 20,
-      scroll - s * 400,
-      width - s * 40,
-      height / 2 - s * 150
+      s * 20, scroll - height/2.3, width - s * 40, height / 3
     );
   } else {
     text(
       "Good Evening",
-      s * 20,
-      scroll - s * 400,
-      width - s * 40,
-      height / 2 - s * 150
+      s * 20, scroll - height/2.3, width - s * 40, height / 3
     );
   }
 
