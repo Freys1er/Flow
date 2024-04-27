@@ -9,7 +9,6 @@ let theme = {
   clock: "Analogue",
 };
 
-let keys = [];
 let stage = "HOME";
 let choosen = null;
 let points = [];
@@ -33,6 +32,7 @@ let h = {
   r: [],
   scroll: [],
   menu: false,
+  recent: [],
 };
 let file;
 let shift = 0;
@@ -55,11 +55,6 @@ let charts = {
 
 //KEYS
 let numpadOn = false;
-let numbers = [];
-let number;
-let keymenu = {
-  show: false,
-};
 
 //SIGN IN VARIABLES
 let signinstage = 0;
@@ -117,9 +112,13 @@ function preload() {
 
 //MORE SETUp
 function filtersets(x) {
+  h.recent = getItem("Recent_Sets");
+  if (!h.recent) {
+    h.recent = [];
+  }
   h.keys = [];
-  h.titles = [];
-  h.names = [];
+  h.titles = ["CONTINUE STUDYING"];
+  h.names = [h.recent];
   h.r = [];
   h.colors = [];
 
@@ -140,9 +139,6 @@ function filtersets(x) {
         h.titles.push(h.keys[j]);
         h.names.push(h.r[j]);
         h.scroll.push(s * 50);
-        h.colors.push(
-          color(random(200, 255), random(200, 255), random(200, 255))
-        );
       }
     }
   }
@@ -192,8 +188,8 @@ function windowResized() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
- textStyle(BOLD);
-  
+  textStyle(BOLD);
+
   data = {
     flow: data.flow.getArray(),
     people: data.people.getArray(),
@@ -205,9 +201,9 @@ function setup() {
 
   s = min([width, height]) / 500;
   //GET KEYS
-  keys = getItem("KEYS");
-  if (!keys) {
-    keys = [];
+  chat.keys = getItem("KEYS");
+  if (!chat.keys) {
+    chat.keys = ["Public"];
   }
   //SIGN IN
   info = getItem("USER INFO");
@@ -249,7 +245,7 @@ function setup() {
     total.push(data.flow[i][3].split("#").length);
   }
 
-  filtercharts(keys);
+  filtercharts();
 
   filtersets();
 
@@ -285,13 +281,11 @@ function todate(x) {
   );
 }
 function filterchats() {
-  chat = {
-    data: [],
-    keys: [],
-  };
-  for (let i = 0; i < keys.length; i++) {
+  chat.data= [];
+  chat.del=[];
+  for (let i = 0; i < chat.keys.length; i++) {
     chat.data.push([]);
-    chat.keys.push(keys[i]);
+    chat.del.push(0);
   }
   for (let i = 0; i < data.chat.length; i++) {
     if (data.chat[i][0] !== "") {
@@ -299,7 +293,7 @@ function filterchats() {
       chat.keyy = decoded.split("~")[1];
       chat.message = decoded.split("~")[0];
       if (
-        keys.indexOf(chat.keyy) > -1 ||
+        chat.keys.indexOf(chat.keyy) > -1 ||
         chat.keyy === info.email ||
         chat.keyy === "Public"
       ) {
@@ -345,7 +339,7 @@ function animation() {
 function button(x, y, w, h) {
   return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + h;
 }
-function filtercharts(keys) {
+function filtercharts() {
   for (let i = 0; i < data.charts.length; i++) {
     if (
       data.charts[i][3] !== "" &&
@@ -380,7 +374,7 @@ function filtercharts(keys) {
   charts.assets = [];
 
   for (let i = 0; i < charts.data.length; i++) {
-    if (keys.length > 0 || charts.data[i].value > 1) {
+    if (charts.data[i].value > 1) {
       charts.assets.push(charts.data[i].name);
       charts.votes.push(charts.data[i].value);
     }
@@ -452,11 +446,11 @@ function navbar() {
   fill(c("White"));
   textAlign(CENTER, CENTER);
   //UI
-  textSize(50);
-  text("⌂", map(3, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  text("⨹", map(2, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  text("⌥", map(5, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  textSize(s*40);
   text("🂡", map(1, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  textSize(s*50);
+  text("⌂", map(3, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
+  text("⌥", map(2, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
   text("⎔", map(4, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
 
   //BUTTONS
@@ -469,6 +463,7 @@ function navbar() {
     ) &&
     hold === 1
   ) {
+    scroll = height;
     stage = "FLOW";
   }
   if (
@@ -513,16 +508,15 @@ function navbar() {
     ) &&
     hold === 1
   ) {
-    stage = "KEYS";
+    //NO APP YET
   }
-
+  
   //Page changes
   if (
     button(width / 20, (height / 10) * 9, width - width / 20, height / 12) &&
     hold === 1
   ) {
     storeItem("PAGE", stage);
-    scroll = 0;
     start = frameCount;
     wait = true;
   }
@@ -777,6 +771,16 @@ function loading() {
   }
 }
 
+function saverecent() {
+  for (let i = 0; i < h.recent.length; i++) {
+    if (h.recent[i] === choosen) {
+      h.recent.splice(i, 1);
+    }
+  }
+  h.recent.splice(0, 0, choosen);
+  storeItem("Recent_Sets", h.recent);
+}
+
 function flow() {
   background(c("Background"));
   animation();
@@ -792,22 +796,51 @@ function flow() {
   if (abs(mouseX - pmouseX) < abs(mouseY - pmouseY) && mouseIsPressed) {
     scroll -= pmouseY - mouseY;
   }
-  if (scroll > height / 10) {
-    scroll = height / 10;
+  if (scroll > height / 2) {
+    scroll = height / 2;
   }
-  if (scroll < -s * 170 * h.titles.length+height/2) {
-    scroll = -s * 170 * h.titles.length+height/2;
+  if (scroll < -s * 170 * h.titles.length + height / 2) {
+    scroll = -s * 170 * h.titles.length + height / 2;
   }
+
+  stroke(c("Grey"));
+  noFill();
+  strokeWeight(2);
+  rect(s * 20, scroll - s * 400, width - s * 40, height / 2 - s * 150, 20);
+
+  noStroke();
+  fill(c("Inverse"));
+  textSize(s * 80);
+  if (hour() < 12) {
+    text(
+      "Good Morning",
+      s * 20,
+      scroll - s * 400,
+      width - s * 40,
+      height / 2 - s * 150
+    );
+  } else {
+    text(
+      "Good Evening",
+      s * 20,
+      scroll - s * 400,
+      width - s * 40,
+      height / 2 - s * 150
+    );
+  }
+
+  textSize(s * 25);
 
   for (let i = 0; i < h.titles.length; i++) {
     textAlign(LEFT, CENTER);
-    fill(h.colors[i]);
+    fill(c("Inverse"));
     text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
     for (let j = 0; j < h.names[i].length; j++) {
-      fill(h.colors[i]);
+      noFill();
+      strokeWeight(2);
+      stroke(c("Grey"));
       if (choosen === h.names[i][j]) {
-        strokeWeight(s * 50);
-        stroke(h.colors[i]);
+        fill(c("Inverse"));
       }
       rect(
         j * s * 220 + h.scroll[i],
@@ -822,7 +855,7 @@ function flow() {
         !wait &&
         !h.menu &&
         hold > 0 &&
-        hold < 5 &&
+        hold < 10 &&
         button(
           j * s * 220 + h.scroll[i],
           i * s * 170 + scroll,
@@ -835,7 +868,11 @@ function flow() {
       }
 
       textAlign(CENTER, CENTER);
-      fill(c("Background"));
+      if (choosen === h.names[i][j]) {
+        fill(c("Background"));
+      } else {
+        fill(c("Inverse"));
+      }
       text(
         h.names[i][j],
         j * s * 220 + h.scroll[i],
@@ -861,29 +898,52 @@ function flow() {
   }
 
   if (choosen && stage !== "EXIT-FLOW") {
-    fill(c("Grey"));
-    rect(0, (height / 5) * 3, width, height, 20);
-    fill(c("Grey4"));
-    rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
-    
-    fill(c("Grey2"));
-    rect(width/10, (height / 20) * 15, width-width/5, height/8,10);
-    rect(width/10, (height / 20) * 18, width/2-width/8, height/15,10);
-    rect(width/1.9, (height / 20) * 18, width/2-width/8, height/15,10);
-    
-    textAlign(CENTER,CENTER);
-    textSize(s*30);
+    stroke(c("Inverse"));
     fill(c("Background"));
-    text(choosen,0, (height / 5) * 3, width, height/6);
-    text("Flashcards",width/10, (height / 20) * 15, width-width/5, height/8);
+    rect(0, (height / 5) * 3, width, height, 20);
+    rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
+    noFill();
+    rect(width / 10, (height / 20) * 15, width - width / 5, height / 8, 10);
+    rect(
+      width / 10,
+      (height / 20) * 18,
+      width / 2 - width / 8,
+      height / 15,
+      10
+    );
+    rect(
+      width / 1.9,
+      (height / 20) * 18,
+      width / 2 - width / 8,
+      height / 15,
+      10
+    );
 
-    if (button(width/10, (height / 20) * 15, width-width/5, height/8) && hold===1) {
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(s * 30);
+    fill(c("Inverse"));
+    text(choosen, 0, (height / 5) * 3, width, height / 6);
+    text(
+      "Flashcards",
+      width / 10,
+      (height / 20) * 15,
+      width - width / 5,
+      height / 8
+    );
+
+    if (
+      button(width / 10, (height / 20) * 15, width - width / 5, height / 8) &&
+      hold === 1
+    ) {
       for (let i = 0; i < data.flow.length; i++) {
         if (data.flow[i][2] === choosen) {
           file = data.flow[i][3].split("#");
         }
       }
       stage = "FLASHCARDS";
+
+      saverecent(choosen);
     }
 
     if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
@@ -971,7 +1031,7 @@ function leaderboards() {
     width / 2,
     height / 40
   );
-  if (hold>0){
+  if (hold > 0) {
     scroll -= pmouseY - mouseY;
   }
   if (scroll > height / 10) {
@@ -1011,8 +1071,8 @@ function showchart() {
 
   len = charts.values.length;
   text(choosen, width / 2, height / 40);
-  if (hold>0){
-    scroll -= pmouseY - mouseY;
+  if (hold > 0) {
+    scroll -= pmouseX - mouseX;
   }
   if (scroll < width / 4) {
     scroll = width / 4;
@@ -1105,36 +1165,16 @@ function showchart() {
 }
 function chats() {
   background(c("Background"));
-  if (hold>0){
+  if (hold > 0) {
     scroll -= pmouseY - mouseY;
   }
-  if (scroll > height / 10) {
-    scroll = height / 10;
+  if (scroll<0) {
+    scroll = 0;
   }
-  if (scroll < (-height / 10) * chat.keys.length + height / 2) {
-    scroll = (-height / 10) * chat.keys.length + height / 2;
+  if (scroll >s*80 * chat.keys.length) {
+    scroll = s*80 * chat.keys.length;
   }
-  choosen = list(chat.keys, height / 10, scroll);
-  if (choosen) {
-    stage = "VIEW CHAT";
-    messages = chat.data[chat.keys.indexOf(choosen)];
-    messagebox.show();
-  }
-  navbar();
-}
-function editkeys() {
-  background(c("Background"));
-  animation();
-  if (hold>0){
-    scroll -= pmouseY - mouseY;
-  }
-  if (scroll > height / 10) {
-    scroll = height / 10;
-  }
-  if (scroll < (-height / 10) * keys.length + height / 2) {
-    scroll = (-height / 10) * keys.length + height / 2;
-  }
-  choosen = list(keys, height / 10, scroll);
+
   textAlign(CENTER, CENTER);
   textSize(s * 70);
   text("+", width - width / 14, height / 20);
@@ -1146,73 +1186,88 @@ function editkeys() {
     fill(c("White"));
     text(type.value(), width / 2, height / 4);
     if (key === "Enter") {
-      keys.push(type.value());
+      chat.keys.push(type.value());
       type.value("");
       type.hide();
       numpadOn = false;
       end = frameCount + 50;
-      redirect = "KEYS";
+      redirect = "CHATS";
       stage = "LOADING";
-      storeItem("KEYS", keys);
-      filtercharts(keys);
+      storeItem("KEYS", chat.keys);
       filterchats();
     }
   } else {
     type.hide();
+    textAlign(LEFT, CENTER);
+    for (let i = 0; i < chat.keys.length; i++) {
+      strokeWeight(2);
+      stroke(
+        lerpColor(
+          c("Grey2"),
+          color(0, 0, 0, 0),
+          map(i * s*80 + scroll, -100, 100, 1, 0)
+        )
+      );
+      line(width / 15, i * s *80+ scroll, width - width / 15, i * s*80 + scroll);
+
+      textSize(s * 30);
+      noStroke();
+      fill(
+        lerpColor(
+          c("White"),
+          color(0, 0, 0, 0),
+          map(i * s*80 + scroll, -100, 100, 1, 0)
+        )
+      );
+      if (chat.del[i]>0){
+        fill(lerpColor(c("Inverse"),c("Red"),chat.del[i]/10));
+      }
+      if (hold===0){
+        chat.del[i]=0;
+      }
+      text(chat.keys[i], width / 18, i * s *80 +s*40+ scroll);
+      text(chat.data[i].length, width - width / 4, i * s *80 +s*40 + scroll);
+
+      textSize(s *35);
+      text(">", width - width / 8, i * s *80+ s *40 + scroll);
+
+      if (
+        mouseY > i * s * 80 + scroll &&
+        mouseY < i * s * 80 + s * 80 + scroll &&
+        !wait
+      ) {
+        if (hold < 5 &&hold > 0 &&!mouseIsPressed){
+          stage = "VIEW CHAT";
+          messages = chat.data[i];
+          messagebox.show();
+        }
+        if (hold>0){
+          chat.del[i]++;
+        }
+      }
+      if (chat.del[i]>50){
+        chat.keys.splice(i,1);
+        storeItem("KEYS", chat.keys);
+        filterchats();
+      }
+    }
+
   }
   if (
-    dist(width - width / 14, height / 20, mouseX, mouseY) < s * 200 &&
+    dist(width - width / 14, height / 20, mouseX, mouseY) < s * 100 &&
     hold === 1
   ) {
     numpadOn = true;
   }
-  if (choosen) {
-    keymenu = {
-      ky: choosen,
-      show: true,
-    };
-    wait = true;
-  }
-  if (keymenu.show && !numpadOn) {
-    fill(c("White"));
-    rect(width / 4, height / 2 - height / 9, width / 2, height / 5, 20);
-
-    fill(c("Red"));
-    rect(width / 4 + 10, (height / 10) * 5, width / 2 - 20, height / 12, 20);
-
-    textSize(s * 25);
-    fill(c("Background"));
-    text("DELETE", width / 2, (height / 10) * 5.4);
-
-    textSize(s * 40);
-    text(keymenu.ky, width / 2, (height / 10) * 4.5);
-
-    if (hold === 1) {
-      if (
-        button(
-          width / 4 + 10,
-          (height / 10) * 5,
-          width / 2 - 20,
-          height / 12
-        ) &&
-        hold === 1
-      ) {
-        keys.splice(keys.indexOf(keymenu.ky), 1);
-        storeItem("KEYS", keys);
-        filtercharts(keys);
-        filterchats();
-      }
-      keymenu.show = false;
-    }
-  }
   navbar();
 }
+
 function viewchat() {
   background(c("Background"));
   let j = scroll;
   let date = "";
   let person = "";
-  if (hold>0){
+  if (hold > 0) {
     scroll -= pmouseY - mouseY;
   }
   for (let i = 0; i < messages.length; i++) {
@@ -1333,9 +1388,6 @@ function draw() {
   }
   if (stage === "CHATS") {
     chats();
-  }
-  if (stage === "KEYS") {
-    editkeys();
   }
   if (stage === "VIEW CHAT") {
     viewchat();
