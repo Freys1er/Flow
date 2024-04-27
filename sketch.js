@@ -9,14 +9,11 @@ let theme = {
   clock: "Analogue",
 };
 
-let stage = "HOME";
+let stage;
 let choosen = null;
 let points = [];
-let colors;
 let dark = true;
-let raw;
 let s = 0;
-let type;
 let hold = 0;
 let end = 0;
 let sets = [];
@@ -43,19 +40,6 @@ let streak = 0;
 let qanda = 0;
 let start = 0;
 
-//CHARTS
-let charts = {
-  assets: [],
-  votes: [],
-  data: [],
-  values: [],
-  show: [],
-  dates: [],
-};
-
-//KEYS
-let numpadOn = false;
-
 //SIGN IN VARIABLES
 let signinstage = 0;
 let info = {
@@ -65,36 +49,11 @@ let info = {
   incorrect: false,
 };
 
-//CHATS
-let chat = {
-  data: [],
-  keys: [],
-};
-let messagebox;
-let move = 0;
-let messages;
-let newchat = false;
 
-//SETUP]
 let data = {};
 function preload() {
   data.flow = loadTable(
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1737979596&single=true&output=csv",
-    "header",
-    "csv"
-  );
-  data.people = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1330105403&single=true&output=csv",
-    "header",
-    "csv"
-  );
-  data.charts = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1341412256&single=true&output=csv",
-    "header",
-    "csv"
-  );
-  data.chat = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1030526539&single=true&output=csv",
     "header",
     "csv"
   );
@@ -143,17 +102,6 @@ function filtersets(x) {
     }
   }
 }
-function shiftChar(inputString, amount) {
-  let shiftedString = "";
-  for (let i = 0; i < inputString.length; i++) {
-    let charCode = inputString.charCodeAt(i);
-    let shiftedCharCode = charCode - amount; // Shift the character code upward
-    let shiftedChar = String.fromCharCode(shiftedCharCode);
-    shiftedString += shiftedChar;
-  }
-  return shiftedString;
-}
-// Hash function for a given message
 function hashMessage(message) {
   let hash = 0;
   for (let i = 0; i < message.length; i++) {
@@ -178,12 +126,6 @@ function windowResized() {
   type.style("background-color", color(0, 0, 0, 0));
   type.style("border-color", color(0, 0, 0, 0));
   type.style("color", color(0, 0, 0, 0));
-
-  messagebox.position(width / 40, (height / 10) * 9);
-  messagebox.style("background-color", color(0, 0, 0, 0));
-  messagebox.style("border-color", color(0, 0, 0, 0));
-  messagebox.style("color", color(0, 0, 0, 0));
-  messagebox.hide();
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -192,19 +134,12 @@ function setup() {
 
   data = {
     flow: data.flow.getArray(),
-    people: data.people.getArray(),
-    charts: data.charts.getArray(),
-    chat: data.chat.getArray(),
     colors: data.colors,
     auth: data.auth.getArray(),
   };
 
   s = min([width, height]) / 500;
-  //GET KEYS
-  chat.keys = getItem("KEYS");
-  if (!chat.keys) {
-    chat.keys = ["Public"];
-  }
+
   //SIGN IN
   info = getItem("USER INFO");
   type = createInput();
@@ -215,18 +150,10 @@ function setup() {
   type.style("color", color(0, 0, 0, 0));
   type.hide();
 
-  messagebox = createInput();
-  messagebox.size(width - width / 20, height / 12);
-  messagebox.position(width / 40, (height / 10) * 9);
-  messagebox.style("background-color", color(0, 0, 0, 0));
-  messagebox.style("border-color", color(0, 0, 0, 0));
-  messagebox.style("color", color(0, 0, 0, 0));
-  messagebox.hide();
-
   //COOKIES
   stage = getItem("PAGE");
   if (!stage) {
-    stage = "HOME";
+    stage = "FLOW";
   }
 
   if (!info) {
@@ -245,11 +172,7 @@ function setup() {
     total.push(data.flow[i][3].split("#").length);
   }
 
-  filtercharts();
-
   filtersets();
-
-  filterchats();
 
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
@@ -280,37 +203,6 @@ function todate(x) {
     x[2]
   );
 }
-function filterchats() {
-  chat.data= [];
-  chat.del=[];
-  for (let i = 0; i < chat.keys.length; i++) {
-    chat.data.push([]);
-    chat.del.push(0);
-  }
-  for (let i = 0; i < data.chat.length; i++) {
-    if (data.chat[i][0] !== "") {
-      decoded = shiftChar(data.chat[i][2], -5);
-      chat.keyy = decoded.split("~")[1];
-      chat.message = decoded.split("~")[0];
-      if (
-        chat.keys.indexOf(chat.keyy) > -1 ||
-        chat.keyy === info.email ||
-        chat.keyy === "Public"
-      ) {
-        if (chat.keys.indexOf(chat.keyy) === -1) {
-          chat.keys.push(chat.keyy);
-          chat.data.push([]);
-        }
-        chat.message = {
-          message: chat.message,
-          time: data.chat[i][0],
-          user: data.chat[i][1],
-        };
-        chat.data[chat.keys.indexOf(chat.keyy)].push(chat.message);
-      }
-    }
-  }
-}
 function animation() {
   strokeWeight(2);
   for (let i = 0; i < points.length; i++) {
@@ -339,47 +231,7 @@ function animation() {
 function button(x, y, w, h) {
   return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + h;
 }
-function filtercharts() {
-  for (let i = 0; i < data.charts.length; i++) {
-    if (
-      data.charts[i][3] !== "" &&
-      charts.assets.indexOf(data.charts[i][2]) === -1
-    ) {
-      a = false;
-      if (data.charts[i][2].indexOf("-") === -1) {
-        a = true;
-      } else {
-        for (let j = 0; j < keys.length; j++) {
-          if (data.charts[i][2].split("-")[1] === keys[j]) {
-            a = true;
-          }
-        }
-      }
-      if (a) {
-        charts.assets.push(data.charts[i][2]);
-        charts.votes.push(1);
-      }
-    } else {
-      charts.votes[charts.assets.indexOf(data.charts[i][2])]++;
-    }
-  }
 
-  charts.data = [];
-  for (let i = 0; i < charts.assets.length; i++) {
-    charts.data.push({ name: charts.assets[i], value: charts.votes[i] });
-  }
-
-  charts.data.sort((a, b) => b.value - a.value);
-  charts.votes = [];
-  charts.assets = [];
-
-  for (let i = 0; i < charts.data.length; i++) {
-    if (charts.data[i].value > 1) {
-      charts.assets.push(charts.data[i].name);
-      charts.votes.push(charts.data[i].value);
-    }
-  }
-}
 
 //COLORS
 function c(x) {
@@ -391,169 +243,8 @@ function c(x) {
   let list = split(data.colors.getColumn(x)[i], ",");
   return color(list[0], list[1], list[2]);
 }
-//DYNAMIC MENU
-function list(l, s, scr, l2) {
-  textAlign(LEFT, CENTER);
-  for (let i = 0; i < l.length; i++) {
-    strokeWeight(2);
-    stroke(
-      lerpColor(
-        c("Grey2"),
-        color(0, 0, 0, 0),
-        map(i * s + scr, -100, 100, 1, 0)
-      )
-    );
-    line(width / 15, i * s + scr, width - width / 15, i * s + scr);
-
-    textSize(s / 3);
-    noStroke();
-    fill(
-      lerpColor(
-        c("White"),
-        color(0, 0, 0, 0),
-        map(i * s + scr, -100, 100, 1, 0)
-      )
-    );
-    text(l[i], width / 18, i * s + s / 2 + scr);
-    if (l2) {
-      text(l2[i], width - width / 4, i * s + s / 2 + scr);
-    }
-
-    textSize(s / 2);
-    text(">", width - width / 8, i * s + s / 2 + scr);
-
-    if (
-      mouseY > i * s + scr &&
-      mouseY < i * s + s + scr &&
-      hold < 5 &&
-      hold > 0 &&
-      !mouseIsPressed &&
-      !wait
-    ) {
-      return l[i];
-    }
-  }
-}
-
-//DYNAMIC NAVBAR
-function navbar() {
-  strokeWeight(2);
-  stroke(c("White"));
-  fill(lerpColor(c(theme.navbar), color(0, 0, 0), 0.8));
-  rect(width / 40, (height / 10) * 9, width - width / 20, height / 12, 100);
-
-  noStroke();
-  fill(c("White"));
-  textAlign(CENTER, CENTER);
-  //UI
-  textSize(s*40);
-  text("🂡", map(1, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  textSize(s*50);
-  text("⌂", map(3, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  text("⌥", map(2, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-  text("⎔", map(4, 0, 6, width / 40, width - width / 20), (height / 10) * 9.5);
-
-  //BUTTONS
-  if (
-    button(
-      map(0.5, 0, 6, width / 40, width - width / 20),
-      (height / 10) * 9,
-      map(1.5, 0, 6, width / 40, width - width / 20),
-      height / 12
-    ) &&
-    hold === 1
-  ) {
-    scroll = height;
-    stage = "FLOW";
-  }
-  if (
-    button(
-      map(1.5, 0, 6, width / 40, width - width / 20),
-      (height / 10) * 9,
-      map(2.5, 0, 6, width / 40, width - width / 20),
-      height / 12
-    ) &&
-    hold === 1
-  ) {
-    stage = "CHARTS";
-  }
-  if (
-    button(
-      map(2.5, 0, 6, width / 40, width - width / 20),
-      (height / 10) * 9,
-      map(3.5, 0, 6, width / 40, width - width / 20),
-      height / 12
-    ) &&
-    hold === 1
-  ) {
-    stage = "HOME";
-  }
-  if (
-    button(
-      map(3.5, 0, 6, width / 40, width - width / 20),
-      (height / 10) * 9,
-      map(4.5, 0, 6, width / 40, width - width / 20),
-      height / 12
-    ) &&
-    hold === 1
-  ) {
-    stage = "CHATS";
-  }
-  if (
-    button(
-      map(4.5, 0, 6, width / 40, width - width / 20),
-      (height / 10) * 9,
-      map(5.5, 0, 6, width / 40, width - width / 20),
-      height / 12
-    ) &&
-    hold === 1
-  ) {
-    //NO APP YET
-  }
-  
-  //Page changes
-  if (
-    button(width / 20, (height / 10) * 9, width - width / 20, height / 12) &&
-    hold === 1
-  ) {
-    storeItem("PAGE", stage);
-    start = frameCount;
-    wait = true;
-  }
-}
 
 //APPS
-function home() {
-  background(c("Background"));
-  animation();
-  //CLOCK
-  noStroke();
-
-  fill(c("Inverse"));
-  textSize(s * 160);
-  textAlign(CENTER, TOP);
-  if (minute() < 10) {
-    text(hour() + ":0" + minute(), width / 2, height / 8);
-  } else {
-    text(hour() + ":" + minute(), width / 2, height / 8);
-  }
-  //LOG IN
-  textSize(s * 20);
-  text("Logged in as " + info.email, width / 2, height / 40);
-
-  if (hold === 1 && mouseY < height / 20) {
-    info = {
-      email: "",
-      password: "",
-      stage: "EMAIL",
-    };
-    end = frameCount + 100;
-    stage = "LOADING";
-    redirect = "SIGN IN";
-  }
-  navbar();
-}
-
 function signin() {
   type.show();
   noStroke();
@@ -670,6 +361,7 @@ function signin() {
     text("➜", width * 0.87, height / 2 - height / 25);
 
     if (
+      key === "Enter" ||
       dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
       hold === 1
     ) {
@@ -734,7 +426,7 @@ function signin() {
     if (hashMessage(info.password) === password) {
       info.incorrect = false;
       stage = "LOADING";
-      redirect = "HOME";
+      redirect = "FLOW";
       storeItem("USER INFO", info);
       end = frameCount + 10;
       type.hide();
@@ -784,6 +476,17 @@ function saverecent() {
 function flow() {
   background(c("Background"));
   animation();
+  
+  if (mouseY<height/10 && hold===1) {
+    info = {
+      email: "",
+      password: "",
+      stage: "EMAIL",
+      incorrect: false,
+    };
+    stage = "SIGN IN";
+  }
+  
   fill(c("Inverse"));
   textSize(s * 20);
   text(
@@ -807,6 +510,10 @@ function flow() {
   noFill();
   strokeWeight(2);
   rect(s * 20, scroll - height/2.3, width - s * 40, height / 3, 20);
+  
+  if (button(s * 20, scroll - height/2.3, width - s * 40, height / 3) && hold===1){
+    dark=!dark;    
+  }
 
   noStroke();
   fill(c("Inverse"));
@@ -944,9 +651,7 @@ function flow() {
       choosen = null;
       wait = true;
     }
-  } else {
-    navbar();
-  }
+  } 
 }
 
 function flashcards() {
@@ -956,7 +661,7 @@ function flashcards() {
 
   textAlign(CENTER, CENTER);
   textSize(s * 20);
-  fill(c("White"));
+  fill(c("Inverse"));
   noStroke();
   text(choosen, width / 2, height / 40);
   textSize(s * 25);
@@ -1004,7 +709,7 @@ function flashcards() {
   }
 
   textAlign(LEFT, TOP);
-  fill(c("Grey4"));
+  fill(c("Inverse"));
   noStroke();
   rect(width / 80, height / 4, width / 180, height / 2, 20);
   rect(width / 40, height / 4, width / 180, height / 2, 20);
@@ -1015,353 +720,9 @@ function flashcards() {
   }
 }
 
-function leaderboards() {
-  background(c("Background"));
-  textSize(s * 20);
-  text(
-    floor(
-      charts.votes.reduce((a, b) => a + b) - 1000 / (frameCount - start) / 10
-    ) + " votes and counting...",
-    width / 2,
-    height / 40
-  );
-  if (hold > 0) {
-    scroll -= pmouseY - mouseY;
-  }
-  if (scroll > height / 10) {
-    scroll = height / 10;
-  }
-  if (scroll < (-height / 10) * charts.assets.length + height / 2) {
-    scroll = (-height / 10) * charts.assets.length + height / 2;
-  }
-  choosen = list(charts.assets, height / 10, scroll, charts.votes);
-  if (choosen) {
-    file = [];
-    charts.date = "";
-    charts.dates = [];
-    charts.values = [];
-    for (let i = 0; i < data.charts.length; i++) {
-      if (data.charts[i][2] === choosen) {
-        timestamp = data.charts[i][0].split(" ")[0];
-        value = float(data.charts[i][3]);
-        if (charts.date !== timestamp) {
-          charts.date = timestamp;
-          charts.values.push(value);
-          charts.dates.push(charts.date);
-        } else {
-          charts.values[charts.values.length - 1] =
-            (charts.values[charts.values.length - 1] + value) / 2;
-        }
-      }
-    }
-    stage = "CHART";
-  }
-
-  navbar();
-}
-function showchart() {
-  fill(c("Background"));
-  rect(0, 0, width, height);
-
-  len = charts.values.length;
-  text(choosen, width / 2, height / 40);
-  if (hold > 0) {
-    scroll -= pmouseX - mouseX;
-  }
-  if (scroll < width / 4) {
-    scroll = width / 4;
-  }
-  if (scroll > ((len - 2) * width) / 4) {
-    scroll = ((len - 2) * width) / 4;
-  }
-  strokeWeight(1);
-  beginShape();
-  for (let i = 0; i < len; i++) {
-    if ((-i * width) / 4 + scroll + width / 2 > 0) {
-      noStroke();
-      fill(c("White"));
-      textSize(s * 15);
-      text(
-        charts.dates[len - i],
-        width / 2 + scroll + (-i * width) / 4,
-        height / 7
-      );
-
-      stroke(c("Grey2"));
-      line(
-        width / 2 + scroll + (-i * width) / 4,
-        height / 5,
-        width / 2 + scroll + (-i * width) / 4,
-        (height / 15) * 10 + height / 5
-      );
-
-      vertex(
-        (-i * width) / 4 + scroll + width / 2,
-        map(
-          charts.values[len - i],
-          10,
-          0,
-          height / 5,
-          (10 * height) / 15 + height / 5
-        )
-      );
-    }
-  }
-  strokeWeight(3);
-  stroke(c("Green"));
-  noFill();
-  endShape();
-  strokeWeight(1);
-  stroke(c("Grey2"));
-  fill(c("Inverse"));
-  for (let i = 0; i <= 10; i++) {
-    line(
-      0,
-      (i * height) / 15 + height / 5,
-      width,
-      (i * height) / 15 + height / 5
-    );
-    text(10 - i, width - 10, (i * height) / 15 + height / 5);
-  }
-  noStroke();
-  textAlign(CENTER, CENTER);
-  fill(c("White"));
-  textSize(s * 25);
-  text(choosen, width * 0.4975, height * 0.046);
-
-  fill(c("Blue"));
-  rect(width / 4, height - height / 8, width / 2, height / 12, 10);
-  fill(c("Background"));
-  text("VOTE", width / 2, height - height / 12);
-
-  if (
-    key === "Enter" ||
-    (hold === 1 &&
-      button(width / 4, height - height / 8, width / 2, height / 12))
-  ) {
-    window.location.replace(
-      "https://docs.google.com/forms/d/e/1FAIpQLSdvtosvQ3nNgq-YKbzfVIuObONqYFKBPWyKndm7tlYN5LEGvQ/viewform?entry.1418346935=" +
-        "" +
-        "&entry.224164793=" +
-        choosen
-    );
-  }
-
-  fill(c("Grey4"));
-  noStroke();
-  rect(width / 80, height / 4, width / 180, height / 2, 20);
-  rect(width / 40, height / 4, width / 180, height / 2, 20);
-
-  if (hold === 1 && mouseX < width / 20) {
-    stage = "EXIT-CHARTS";
-    wait = true;
-  }
-}
-function chats() {
-  background(c("Background"));
-  if (hold > 0) {
-    scroll -= pmouseY - mouseY;
-  }
-  if (scroll<0) {
-    scroll = 0;
-  }
-  if (scroll >s*80 * chat.keys.length) {
-    scroll = s*80 * chat.keys.length;
-  }
-
-  textAlign(CENTER, CENTER);
-  textSize(s * 70);
-  text("+", width - width / 14, height / 20);
-  if (numpadOn) {
-    textSize(s * 30);
-    type.show();
-    fill(c("Grey4"));
-    rect(width / 5, height / 5.5, width / 1.7, height / 8, 20);
-    fill(c("White"));
-    text(type.value(), width / 2, height / 4);
-    if (key === "Enter") {
-      chat.keys.push(type.value());
-      type.value("");
-      type.hide();
-      numpadOn = false;
-      end = frameCount + 50;
-      redirect = "CHATS";
-      stage = "LOADING";
-      storeItem("KEYS", chat.keys);
-      filterchats();
-    }
-  } else {
-    type.hide();
-    textAlign(LEFT, CENTER);
-    for (let i = 0; i < chat.keys.length; i++) {
-      strokeWeight(2);
-      stroke(
-        lerpColor(
-          c("Grey2"),
-          color(0, 0, 0, 0),
-          map(i * s*80 + scroll, -100, 100, 1, 0)
-        )
-      );
-      line(width / 15, i * s *80+ scroll, width - width / 15, i * s*80 + scroll);
-
-      textSize(s * 30);
-      noStroke();
-      fill(
-        lerpColor(
-          c("White"),
-          color(0, 0, 0, 0),
-          map(i * s*80 + scroll, -100, 100, 1, 0)
-        )
-      );
-      if (chat.del[i]>0){
-        fill(lerpColor(c("Inverse"),c("Red"),chat.del[i]/10));
-      }
-      if (hold===0){
-        chat.del[i]=0;
-      }
-      text(chat.keys[i], width / 18, i * s *80 +s*40+ scroll);
-      text(chat.data[i].length, width - width / 4, i * s *80 +s*40 + scroll);
-
-      textSize(s *35);
-      text(">", width - width / 8, i * s *80+ s *40 + scroll);
-
-      if (
-        mouseY > i * s * 80 + scroll &&
-        mouseY < i * s * 80 + s * 80 + scroll &&
-        !wait
-      ) {
-        if (hold < 5 &&hold > 0 &&!mouseIsPressed){
-          stage = "VIEW CHAT";
-          messages = chat.data[i];
-          messagebox.show();
-        }
-        if (hold>0){
-          chat.del[i]++;
-        }
-      }
-      if (chat.del[i]>50){
-        chat.keys.splice(i,1);
-        storeItem("KEYS", chat.keys);
-        filterchats();
-      }
-    }
-
-  }
-  if (
-    dist(width - width / 14, height / 20, mouseX, mouseY) < s * 100 &&
-    hold === 1
-  ) {
-    numpadOn = true;
-  }
-  navbar();
-}
-
-function viewchat() {
-  background(c("Background"));
-  let j = scroll;
-  let date = "";
-  let person = "";
-  if (hold > 0) {
-    scroll -= pmouseY - mouseY;
-  }
-  for (let i = 0; i < messages.length; i++) {
-    fill(c("White"));
-    if (date !== todate(messages[i].time)) {
-      textAlign(CENTER, CENTER);
-      textSize(s * 15);
-      text(todate(messages[i].time), width / 2, j + height / 30);
-      j += s * 50;
-      textAlign(LEFT, CENTER);
-    }
-    if (person !== messages[i].user) {
-      textSize(s * 15);
-      text(messages[i].user, width / 35, j + height / 30);
-      j += s * 50;
-    }
-
-    textAlign(LEFT, CENTER);
-    textSize(s * 20);
-    wid = textWidth(messages[i].message);
-    fill(c("Blue"));
-    rect(width / 40, j - s * 8, wid + width / 25, s * 35, 20);
-    fill(c("White"));
-    text(messages[i].message, width / 25, j, wid + width / 10, s * 22);
-    j += s * 40;
-
-    person = messages[i].user;
-    date = todate(messages[i].time);
-  }
-  size = j - scroll;
-
-  if (scroll > 0) {
-    scroll = 0;
-  }
-  if (scroll < height / 2 - size) {
-    scroll = height / 2 - size;
-  }
-
-  strokeWeight(2);
-  stroke(c("White"));
-  fill(lerpColor(c(theme.navbar), color(0, 0, 0), 0.8));
-  rect(width / 40, (height / 10) * 9, width - width / 20, height / 12, 100);
-  fill(c("Blue"));
-  ellipse(
-    width / 40 + width - width / 10,
-    (height / 10) * 9.4,
-    height / 12,
-    height / 12
-  );
-
-  textSize(s * 25);
-  textAlign(LEFT, CENTER);
-  noStroke();
-  fill(c("White"));
-  text(
-    messagebox.value(),
-    width / 20,
-    (height / 10) * 9.1,
-    width - width / 20,
-    height / 12
-  );
-  textAlign(CENTER, CENTER);
-  text("✈︎", width / 40 + width - width / 10, (height / 10) * 9.4);
-
-  if (
-    key === "Enter" ||
-    (dist(
-      width / 40 + width - width / 10,
-      (height / 10) * 9.4,
-      mouseX,
-      mouseY
-    ) <
-      height / 20 &&
-      hold === 1)
-  ) {
-    chat.send = messagebox.value() + "~" + choosen;
-    chat.send = shiftChar(chat.send, 5);
-    window.location.replace(
-      "https://docs.google.com/forms/d/e/1FAIpQLSf2GFoVDodD4gTCUwFf2VYmwAi3ySxeVwcqHLl3rH0AD6pKIQ/viewform?usp=pp_url&entry.619223333=" +
-        chat.send
-    );
-  }
-
-  fill(c("Grey4"));
-  noStroke();
-  rect(width / 80, height / 4, width / 180, height / 2, 20);
-  rect(width / 40, height / 4, width / 180, height / 2, 20);
-
-  if (hold === 1 && mouseX < width / 20) {
-    stage = "EXIT-CHAT";
-    wait = true;
-  }
-}
-
 //INTERFACE
 function draw() {
   textFont("Roboto");
-  if (stage === "HOME") {
-    home();
-  }
   if (stage === "SIGN IN") {
     signin();
   }
@@ -1374,39 +735,7 @@ function draw() {
   if (stage === "FLASHCARDS") {
     flashcards();
   }
-  if (stage === "CHARTS") {
-    leaderboards();
-  }
-  if (stage === "CHART") {
-    showchart();
-  }
-  if (stage === "CHATS") {
-    chats();
-  }
-  if (stage === "VIEW CHAT") {
-    viewchat();
-  }
-  if (stage === "FLOW-INFO") {
-    flowinfo();
-  }
-
-  //EXITS
-  if (stage === "EXIT-CHAT") {
-    chats();
-    push();
-    translate(mouseX, 0);
-    viewchat();
-    pop();
-    if (hold === 0) {
-      if (mouseX < width / 2) {
-        stage = "VIEW CHAT";
-      } else {
-        file = null;
-        messagebox.hide();
-        stage = "CHATS";
-      }
-    }
-  }
+  
   if (stage === "EXIT-FLOW") {
     flow();
     push();
@@ -1420,20 +749,6 @@ function draw() {
         file = null;
         choosen = null;
         stage = "FLOW";
-      }
-    }
-  }
-  if (stage === "EXIT-CHARTS") {
-    leaderboards();
-    push();
-    translate(mouseX, 0);
-    showchart();
-    pop();
-    if (hold === 0) {
-      if (mouseX < width / 2) {
-        stage = "CHART";
-      } else {
-        stage = "CHARTS";
       }
     }
   }
