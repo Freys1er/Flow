@@ -1,3 +1,4 @@
+
 //Notes
 
 //
@@ -210,7 +211,6 @@ function animation() {
       points[i][3] = -points[i][3];
     }
   }
-
   // Draw lines between nearby points
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -544,9 +544,9 @@ function flow() {
     fill(c("Inverse"));
     text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
     for (let j = 0; j < h.names[i].length; j++) {
-      noFill();
+      stroke(c("White"));
       strokeWeight(2);
-      stroke(c("Grey"));
+      fill(255,255,255,30);
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
