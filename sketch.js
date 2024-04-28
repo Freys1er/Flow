@@ -257,7 +257,7 @@ function signin() {
   noStroke();
   textAlign(LEFT, CENTER);
   fill(c("Grey3"));
-  if (info.email === "") {
+  if (info.email === " " || info.email === "") {
     if (info.stage === "NEW") {
       text(
         "New Password",
@@ -307,7 +307,8 @@ function signin() {
       }
     }
   }
-
+  type.size(width-10,height-10);
+  type.position(0, 0);
   noStroke();
   textAlign(CENTER, CENTER);
   fill(c("Background"));
