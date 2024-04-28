@@ -1,4 +1,3 @@
-
 //Notes
 
 //
@@ -43,7 +42,13 @@ let start = 0;
 let search = "";
 let glide = {
   info: 0,
-  up: true
+  up: true,
+};
+//NOTES
+let notes = {
+  progress: 1,
+  len: 0,
+  next: 0,
 };
 
 //SIGN IN VARIABLES
@@ -128,6 +133,7 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   s = min([width, height]) / 500;
 }
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -138,7 +144,7 @@ function setup() {
     colors: data.colors,
     auth: data.auth.getArray(),
   };
-  glide.info=(height / 5) * 2;
+  glide.info = (height / 5) * 2;
 
   s = min([width, height]) / 500;
 
@@ -172,6 +178,12 @@ function setup() {
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
+  }
+
+  //Open Link
+  params = getURLParams();
+  if (params.name) {
+    stage = "OPEN URL";
   }
 }
 //FUNCTIONS
@@ -211,6 +223,7 @@ function animation() {
       points[i][3] = -points[i][3];
     }
   }
+
   // Draw lines between nearby points
   for (let i = 0; i < points.length; i++) {
     for (let j = i + 1; j < points.length; j++) {
@@ -238,6 +251,105 @@ function c(x) {
 }
 
 //APPS
+function shownotes(x) {
+  background(c("Background"));
+  x = x.split(/<|>/);
+  if (scroll > 0) {
+    scroll = 0;
+  }
+  if (scroll < -notes.len) {
+    scroll = -notes.len;
+    notes.next = true;
+  } else if (mouseIsPressed) {
+    scroll -= pmouseY - mouseY;
+  }
+  j = scroll + height / 10;
+  fill(255);
+  for (let i = 1; i < notes.progress * 2; i += 2) {
+    if (x[i] === "H1") {
+      textAlign(CENTER, TOP);
+      textSize(s * 70);
+      text(x[i + 1], 0, j, width, Infinity);
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "H2") {
+      textAlign(CENTER, TOP);
+      textSize(s * 50);
+      text(x[i + 1], 0, j, width, Infinity);
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "H3") {
+      textAlign(LEFT, TOP);
+      textSize(s * 30);
+      text(x[i + 1], width / 60, j, width, Infinity);
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "H4") {
+      textAlign(LEFT, TOP);
+      textSize(s * 20);
+      text(x[i + 1], width / 60, j, width, Infinity);
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "H5") {
+      textAlign(LEFT, TOP);
+      textSize(s * 15);
+      text(x[i + 1], width / 60, j, width, Infinity);
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    }
+  }
+  notes.len = j;
+
+  if (notes.next) {
+    textSize(s * 30);
+    textStyle(BOLD);
+    textAlign(CENTER, CENTER);
+    fill(c("Inverse"));
+    rect(width / 30, (height / 10) * 9, width - width / 15, height / 12, 10);
+    if (notes.progress * 2 < x.length) {
+      fill(c("Background"));
+      text(
+        "NEXT",
+        width / 30,
+        (height / 10) * 9,
+        width - width / 15,
+        height / 12
+      );
+      textStyle(NORMAL);
+      if (
+        button(
+          width / 30,
+          (height / 10) * 9,
+          width - width / 15,
+          height / 12
+        ) &&
+        hold === 1
+      ) {
+        notes.next = false;
+        notes.progress++;
+      }
+    } else {
+      fill(c("Background"));
+      text(
+        "DONE",
+        width / 30,
+        (height / 10) * 9,
+        width - width / 15,
+        height / 12
+      );
+      textStyle(NORMAL);
+      if (
+        button(
+          width / 30,
+          (height / 10) * 9,
+          width - width / 15,
+          height / 12
+        ) &&
+        hold === 1
+      ) {
+        notes.next = false;
+        notes.progress = 1;
+        stage = "FLOW";
+      }
+    }
+  }
+}
+
 function signin() {
   type.show();
   noStroke();
@@ -307,7 +419,7 @@ function signin() {
       }
     }
   }
-  type.size(width-10,height-10);
+  type.size(width - 10, height - 10);
   type.position(0, 0);
   noStroke();
   textAlign(CENTER, CENTER);
@@ -496,8 +608,8 @@ function flow() {
   if (abs(mouseX - pmouseX) < abs(mouseY - pmouseY) && mouseIsPressed) {
     scroll -= pmouseY - mouseY;
   }
-  if (scroll > height / 2) {
-    scroll = height / 2;
+  if (scroll > height / 3) {
+    scroll = height / 3;
   }
   if (scroll < -s * 170 * h.titles.length + height / 2) {
     scroll = -s * 170 * h.titles.length + height / 2;
@@ -506,7 +618,7 @@ function flow() {
   stroke(c("Grey"));
   noFill();
   strokeWeight(2);
-  rect(s * 20, scroll - height / 2.3, width - s * 40, height / 3, 20);
+  rect(s * 20, scroll - height / 3.5, width - s * 40, height / 5, 20);
 
   type.size(width - s * 40, height / 3);
   type.position(s * 20, scroll - height / 2.3);
@@ -516,26 +628,15 @@ function flow() {
   textSize(s * 120);
   if (minute() < 10) {
     text(
-      hour() + ":0" + minute(),
-      s * 20,
-      scroll - height / 2.3,
-      width - s * 40,
-      height / 3
+      hour() + ":0" + minute(),s * 20, scroll - height / 3.5, width - s * 40, height / 5
     );
   } else {
     text(
-      hour() + ":" + minute(),
-      s * 20,
-      scroll - height / 2.3,
-      width - s * 40,
-      height / 3
+      hour() + ":" + minute(),s * 20, scroll - height / 3.5, width - s * 40, height / 5
     );
   }
-  textSize(s*30);
-  text(type.value(),s * 20,
-      scroll - height / 3.2,
-      width - s * 40,
-      height / 3);
+  textSize(s * 30);
+  text(type.value(), s * 20, scroll - height / 3.2, width - s * 40, height / 3);
 
   textSize(s * 25);
 
@@ -544,9 +645,9 @@ function flow() {
     fill(c("Inverse"));
     text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
     for (let j = 0; j < h.names[i].length; j++) {
-      stroke(c("White"));
-      strokeWeight(2);
       fill(255,255,255,30);
+      strokeWeight(2);
+      stroke(c("Grey"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
@@ -560,7 +661,7 @@ function flow() {
       noStroke();
 
       if (
-        glide.info+100>(height / 5) * 2 &&
+        glide.info + 100 > (height / 5) * 2 &&
         hold > 0 &&
         hold < 10 &&
         button(
@@ -572,8 +673,8 @@ function flow() {
         !mouseIsPressed
       ) {
         choosen = h.names[i][j];
-        glide.up=false;
-        glide.info=(height / 5) * 2;
+        glide.up = false;
+        glide.info = (height / 5) * 2;
       }
 
       textAlign(CENTER, CENTER);
@@ -606,25 +707,23 @@ function flow() {
     }
   }
   if (choosen && stage !== "EXIT-FLOW") {
-    if (glide.info<(height / 5) * 2 && glide.up){
-      glide.info+=50;
+    if (glide.info < (height / 5) * 2 && glide.up) {
+      glide.info += 50;
     }
-    if (glide.info>0 && !glide.up){
-      glide.info-=50;
+    if (glide.info > 0 && !glide.up) {
+      glide.info -= 50;
     }
-    if (!button(0, (height / 5) * 3, width, height) && hold===1){
-      glide.up=true;
+    if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
+      glide.up = true;
     }
-    if (glide.info===(height / 5) * 2 && glide.up){
-      choosen="";
+    if (glide.info === (height / 5) * 2 && glide.up) {
+      choosen = "";
     }
-    fill(0, 0, 0, map(glide.info,0,(height / 5) * 2,200,0));
+    fill(0, 0, 0, map(glide.info, 0, (height / 5) * 2, 200, 0));
     rect(0, 0, width, height);
-    
-    
-    
+
     push();
-    translate(0,glide.info);
+    translate(0, glide.info);
     noStroke();
     stroke(c("Inverse"));
     fill(c("Background"));
@@ -648,7 +747,7 @@ function flow() {
     text("Notes", width * 0.38, (height / 21) * 15, width / 4, height / 4);
     text("Test", width * 0.68, (height / 21) * 15, width / 4, height / 4);
     pop();
-    
+
     if (
       button(width * 0.08, (height / 21) * 15, width / 4, height / 4) &&
       hold === 1
@@ -659,6 +758,32 @@ function flow() {
         }
       }
       stage = "FLASHCARDS";
+
+      saverecent(choosen);
+    }
+    if (
+      button(width * 0.38, (height / 21) * 15, width / 4, height / 4) &&
+      hold === 1
+    ) {
+      for (let i = 0; i < data.flow.length; i++) {
+        if (data.flow[i][2] === choosen) {
+          file = data.flow[i][4];
+        }
+      }
+      stage = "NOTES";
+
+      saverecent(choosen);
+    }
+    if (
+      button(width * 0.68, (height / 21) * 15, width / 4, height / 4) &&
+      hold === 1
+    ) {
+      for (let i = 0; i < data.flow.length; i++) {
+        if (data.flow[i][2] === choosen) {
+          file = data.flow[i][3].split("#");
+        }
+      }
+      stage = "QUIZ";
 
       saverecent(choosen);
     }
@@ -731,6 +856,136 @@ function flashcards() {
   }
 }
 
+function quiz(f) {
+  background(c("Background"));
+
+  fill(c("Grey"));
+  rect(width / 20, height / 20, width - width / 10, height / 3, 20);
+}
+
+function open() {
+  choosen = params.name;
+  if (!params.type) {
+    if (choosen) {
+      if (glide.info < (height / 5) * 2 && glide.up) {
+        glide.info += 50;
+      }
+      if (glide.info > 0 && !glide.up) {
+        glide.info -= 50;
+      }
+      if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
+        glide.up = true;
+      }
+      if (glide.info === (height / 5) * 2 && glide.up) {
+        choosen = "";
+      }
+      fill(0, 0, 0, map(glide.info, 0, (height / 5) * 2, 200, 0));
+      rect(0, 0, width, height);
+
+      push();
+      translate(0, glide.info);
+      noStroke();
+      stroke(c("Inverse"));
+      fill(c("Background"));
+      rect(0, (height / 5) * 3, width, height, 20);
+
+      fill(c("Grey"));
+      rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
+      noFill();
+      rect(width * 0.08, (height / 21) * 15, width / 4, height / 4, 10);
+      rect(width * 0.38, (height / 21) * 15, width / 4, height / 4, 10);
+      rect(width * 0.68, (height / 21) * 15, width / 4, height / 4, 10);
+
+      noStroke();
+      textAlign(CENTER, CENTER);
+      textSize(s * 30);
+      fill(c("Inverse"));
+      text(choosen, 0, (height / 5) * 3, width, height / 6);
+
+      textSize(s * 20);
+      text(
+        "Flashcards",
+        width * 0.08,
+        (height / 21) * 15,
+        width / 4,
+        height / 4
+      );
+      text("Notes", width * 0.38, (height / 21) * 15, width / 4, height / 4);
+      text("Test", width * 0.68, (height / 21) * 15, width / 4, height / 4);
+      pop();
+
+      if (
+        button(width * 0.08, (height / 21) * 15, width / 4, height / 4) &&
+        hold === 1
+      ) {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][3].split("#");
+          }
+        }
+        stage = "FLASHCARDS";
+
+        saverecent(choosen);
+      }
+      if (
+        button(width * 0.38, (height / 21) * 15, width / 4, height / 4) &&
+        hold === 1
+      ) {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][4];
+          }
+        }
+        stage = "NOTES";
+
+        saverecent(choosen);
+      }
+      if (
+        button(width * 0.68, (height / 21) * 15, width / 4, height / 4) &&
+        hold === 1
+      ) {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][3].split("#");
+          }
+        }
+        stage = "QUIZ";
+
+        saverecent(choosen);
+      }
+    } else {
+      if (params.type === "FLASHCARD") {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][3].split("#");
+          }
+        }
+        stage = "FLASHCARDS";
+
+        saverecent(choosen);
+      } else if (params.type === "NOTES") {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][4];
+          }
+        }
+        stage = "NOTES";
+
+        saverecent(choosen);
+      } else if (params.type === "QUIZ") {
+        for (let i = 0; i < data.flow.length; i++) {
+          if (data.flow[i][2] === choosen) {
+            file = data.flow[i][3].split("#");
+          }
+        }
+        stage = "QUIZ";
+
+        saverecent(choosen);
+      }
+    }
+  }
+}
+
 //INTERFACE
 function draw() {
   textFont("Roboto");
@@ -749,6 +1004,27 @@ function draw() {
   if (stage === "FLASHCARDS") {
     flashcards();
     type.hide();
+    text("➧",s*10,s*10);
+    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
+      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    }
+  }
+  if (stage === "NOTES") {
+    shownotes(file);
+    text("➧",s*10,s*10);
+    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
+      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    }
+  }
+  if (stage === "QUIZ") {
+    quiz(file);
+    text("➧",s*10,s*10);
+    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
+      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    }
+  }
+  if (stage === "OPEN URL") {
+    open();
   }
 
   if (stage === "EXIT-FLOW") {
@@ -765,7 +1041,7 @@ function draw() {
         file = null;
         choosen = "";
         stage = "FLOW";
-        glide.info=(height / 5) * 2;
+        glide.info = (height / 5) * 2;
       }
     }
   }
