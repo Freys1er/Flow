@@ -560,9 +560,8 @@ function flow() {
 
       if (
         glide.info+100>(height / 5) * 2 &&
-        !h.menu &&
         hold > 0 &&
-        hold < 5 &&
+        hold < 10 &&
         button(
           j * s * 220 + h.scroll[i],
           i * s * 170 + scroll,
@@ -763,8 +762,9 @@ function draw() {
         stage = "FLASHCARDS";
       } else {
         file = null;
-        choosen = null;
+        choosen = "";
         stage = "FLOW";
+        glide.info=(height / 5) * 2;
       }
     }
   }
