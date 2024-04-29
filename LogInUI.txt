@@ -1,1 +1,199 @@
+function signin() {
+  type.show();
+  noStroke();
+  background("#fbfbfb");
+
+  textSize(s * 30);
+  noFill();
+  strokeWeight(1);
+  stroke(c("Background"));
+  if (info.stage === "EMAIL") {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
+  } else if (info.stage === "NEW") {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
+  } else {
+    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 6, 10);
+  }
+  noStroke();
+  textAlign(LEFT, CENTER);
+  fill(c("Grey3"));
+  if (info.email === " " || info.email === "") {
+    if (info.stage === "NEW") {
+      text(
+        "New Password",
+        width * 0.1,
+        height / 2 - height / 8.3,
+        width * 0.9,
+        height / 6
+      );
+    } else {
+      text(
+        "Google Email - GMail",
+        width * 0.1,
+        height / 2 - height / 8.3,
+        width * 0.9,
+        height / 6
+      );
+    }
+  } else {
+    text(
+      info.email,
+      width * 0.1,
+      height / 2 - height / 8.3,
+      width * 0.9,
+      height / 6
+    );
+  }
+  if (info.stage === "PASSWORD") {
+    noFill();
+    strokeWeight(1);
+    stroke(c("Background"));
+    line(width * 0.1, height / 2, width * 0.9, height / 2);
+    noStroke();
+    textAlign(LEFT, CENTER);
+    fill(c("Grey3"));
+    if (info.password === "") {
+      text("Password", width * 0.1, height / 2, width * 0.9, height / 12);
+    } else {
+      textSize(s * 40);
+      for (let i = 0; i < info.password.length; i++) {
+        text(
+          "•",
+          width * 0.1 + i * s * 15,
+          height / 2,
+          width * 0.9,
+          height / 12
+        );
+      }
+    }
+  }
+  type.size(width - 10, height - 10);
+  type.position(0, 0);
+  noStroke();
+  textAlign(CENTER, CENTER);
+  fill(c("Background"));
+  textSize(s * 50);
+  if (info.incorrect) {
+    text(
+      "Incorrect Password",
+      width * 0.1,
+      height / 6,
+      width * 0.8,
+      height / 5
+    );
+  } else if (info.stage === "NEW") {
+    text("New Password", width * 0.1, height / 6, width * 0.8, height / 5);
+  } else {
+    text("Sign in with Flow", width * 0.1, height / 6, width * 0.8, height / 5);
+  }
+
+  fill(c("Blue"));
+  textSize(s * 20);
+  if (info.stage !== "NEW") {
+    text(
+      "Forgot password?",
+      width / 4,
+      height - height / 5,
+      width / 2,
+      height / 8
+    );
+  }
+  if (
+    hold === 1 &&
+    button(width / 4, height - height / 5, width / 2, height / 8)
+  ) {
+    info.stage = "NEW";
+  }
+  //NEXT BUTTON - EMAIL
+  if (info.stage === "EMAIL" && info.email.indexOf("@rrvsd.ca") > -1) {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 - height / 25);
+
+    if (
+      key === "Enter" ||
+      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+        hold === 1)
+    ) {
+      info.stage = "PASSWORD";
+      type.value("");
+    }
+  }
+  if (info.stage === "NEW" && info.email.length > 5) {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 - height / 25);
+
+    if (
+      key === "Enter" ||
+      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
+        hold === 1)
+    ) {
+      window.location.replace(
+        "https://docs.google.com/forms/d/e/1FAIpQLSfkt1Z1Uu9T7M821tRA4chC0jo2MYskrAGCxBLWE7_uI3r6RQ/viewform?usp=pp_url&entry.2039879610=" +
+          hashMessage(info.email)
+      );
+    }
+  }
+  //NEXT BUTTON - PASSWORD
+  if (info.stage === "PASSWORD") {
+    noFill();
+    stroke(c("Grey3"));
+    ellipse(width * 0.87, height / 2 + height / 25, s * 40, s * 40);
+
+    fill(c("Background"));
+    textSize(s * 30);
+    text("➜", width * 0.87, height / 2 + height / 25);
+
+    if (
+      dist(width * 0.87, height / 2 + height / 25, mouseX, mouseY) < s * 30 &&
+      hold === 1
+    ) {
+      info.stage = "DONE";
+    }
+  }
+
+  if (info.stage === "PASSWORD") {
+    info.password = type.value();
+  }
+  if (info.stage === "NEW" || info.stage === "EMAIL") {
+    info.email = type.value();
+  }
+
+  if (info.stage === "DONE") {
+    let password;
+    for (let i = 0; i < data.auth.length; i++) {
+      if (data.auth[i][1] === info.email) {
+        password = data.auth[i][2];
+      }
+    }
+    print(password);
+    print(hashMessage(info.password));
+    if (hashMessage(info.password) === password) {
+      info.incorrect = false;
+      stage = "LOADING";
+      redirect = "FLOW";
+      storeItem("USER INFO", info);
+      end = frameCount + 10;
+      type.hide();
+      info.stage = "EMAIL";
+      type.value("");
+    } else {
+      info.incorrect = true;
+      stage = "LOADING";
+      redirect = "SIGN IN";
+      end = frameCount + 100;
+      info.stage = "EMAIL";
+      type.value("");
+    }
+  }
+}
 
