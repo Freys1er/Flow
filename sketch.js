@@ -51,15 +51,6 @@ let notes = {
   next: 0,
 };
 
-//SIGN IN VARIABLES
-let signinstage = 0;
-let info = {
-  email: "",
-  password: "",
-  stage: "EMAIL",
-  incorrect: false,
-};
-
 let data = {};
 function preload() {
   data.flow = loadTable(
@@ -148,24 +139,11 @@ function setup() {
 
   s = min([width, height]) / 500;
 
-  //SIGN IN
-  info = getItem("USER INFO");
   type = createInput();
   type.style("background-color", color(0, 0, 0, 0));
   type.style("border-color", color(0, 0, 0, 0));
   type.style("color", color(0, 0, 0, 0));
   type.value(" ");
-
-  //COOKIES
-  if (!info) {
-    info = {
-      email: "",
-      password: "",
-      stage: "EMAIL",
-      incorrect: false,
-    };
-    stage = "SIGN IN";
-  }
 
   //DATA WRANGLING - FLAHSCARDS
   for (let i = 0; i < data.flow.length; i++) {
@@ -350,205 +328,6 @@ function shownotes(x) {
   }
 }
 
-function signin() {
-  type.show();
-  noStroke();
-  background("#fbfbfb");
-
-  textSize(s * 30);
-  noFill();
-  strokeWeight(1);
-  stroke(c("Background"));
-  if (info.stage === "EMAIL") {
-    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
-  } else if (info.stage === "NEW") {
-    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 12, 10);
-  } else {
-    rect(width * 0.05, height / 2 - height / 12, width * 0.9, height / 6, 10);
-  }
-  noStroke();
-  textAlign(LEFT, CENTER);
-  fill(c("Grey3"));
-  if (info.email === " " || info.email === "") {
-    if (info.stage === "NEW") {
-      text(
-        "New Password",
-        width * 0.1,
-        height / 2 - height / 8.3,
-        width * 0.9,
-        height / 6
-      );
-    } else {
-      text(
-        "Google Email - GMail",
-        width * 0.1,
-        height / 2 - height / 8.3,
-        width * 0.9,
-        height / 6
-      );
-    }
-  } else {
-    text(
-      info.email,
-      width * 0.1,
-      height / 2 - height / 8.3,
-      width * 0.9,
-      height / 6
-    );
-  }
-  if (info.stage === "PASSWORD") {
-    noFill();
-    strokeWeight(1);
-    stroke(c("Background"));
-    line(width * 0.1, height / 2, width * 0.9, height / 2);
-    noStroke();
-    textAlign(LEFT, CENTER);
-    fill(c("Grey3"));
-    if (info.password === "") {
-      text("Password", width * 0.1, height / 2, width * 0.9, height / 12);
-    } else {
-      textSize(s * 40);
-      for (let i = 0; i < info.password.length; i++) {
-        text(
-          "•",
-          width * 0.1 + i * s * 15,
-          height / 2,
-          width * 0.9,
-          height / 12
-        );
-      }
-    }
-  }
-  type.size(width - 10, height - 10);
-  type.position(0, 0);
-  noStroke();
-  textAlign(CENTER, CENTER);
-  fill(c("Background"));
-  textSize(s * 50);
-  if (info.incorrect) {
-    text(
-      "Incorrect Password",
-      width * 0.1,
-      height / 6,
-      width * 0.8,
-      height / 5
-    );
-  } else if (info.stage === "NEW") {
-    text("New Password", width * 0.1, height / 6, width * 0.8, height / 5);
-  } else {
-    text("Sign in with Flow", width * 0.1, height / 6, width * 0.8, height / 5);
-  }
-
-  fill(c("Blue"));
-  textSize(s * 20);
-  if (info.stage !== "NEW") {
-    text(
-      "Forgot password?",
-      width / 4,
-      height - height / 5,
-      width / 2,
-      height / 8
-    );
-  }
-  if (
-    hold === 1 &&
-    button(width / 4, height - height / 5, width / 2, height / 8)
-  ) {
-    info.stage = "NEW";
-  }
-  //NEXT BUTTON - EMAIL
-  if (info.stage === "EMAIL" && info.email.indexOf("@rrvsd.ca") > -1) {
-    noFill();
-    stroke(c("Grey3"));
-    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
-
-    fill(c("Background"));
-    textSize(s * 30);
-    text("➜", width * 0.87, height / 2 - height / 25);
-
-    if (
-      key === "Enter" ||
-      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
-        hold === 1)
-    ) {
-      info.stage = "PASSWORD";
-      type.value("");
-    }
-  }
-  if (info.stage === "NEW" && info.email.length > 5) {
-    noFill();
-    stroke(c("Grey3"));
-    ellipse(width * 0.87, height / 2 - height / 25, s * 40, s * 40);
-
-    fill(c("Background"));
-    textSize(s * 30);
-    text("➜", width * 0.87, height / 2 - height / 25);
-
-    if (
-      key === "Enter" ||
-      (dist(width * 0.87, height / 2 - height / 25, mouseX, mouseY) < s * 30 &&
-        hold === 1)
-    ) {
-      window.location.replace(
-        "https://docs.google.com/forms/d/e/1FAIpQLSfkt1Z1Uu9T7M821tRA4chC0jo2MYskrAGCxBLWE7_uI3r6RQ/viewform?usp=pp_url&entry.2039879610=" +
-          hashMessage(info.email)
-      );
-    }
-  }
-  //NEXT BUTTON - PASSWORD
-  if (info.stage === "PASSWORD") {
-    noFill();
-    stroke(c("Grey3"));
-    ellipse(width * 0.87, height / 2 + height / 25, s * 40, s * 40);
-
-    fill(c("Background"));
-    textSize(s * 30);
-    text("➜", width * 0.87, height / 2 + height / 25);
-
-    if (
-      dist(width * 0.87, height / 2 + height / 25, mouseX, mouseY) < s * 30 &&
-      hold === 1
-    ) {
-      info.stage = "DONE";
-    }
-  }
-
-  if (info.stage === "PASSWORD") {
-    info.password = type.value();
-  }
-  if (info.stage === "NEW" || info.stage === "EMAIL") {
-    info.email = type.value();
-  }
-
-  if (info.stage === "DONE") {
-    let password;
-    for (let i = 0; i < data.auth.length; i++) {
-      if (data.auth[i][1] === info.email) {
-        password = data.auth[i][2];
-      }
-    }
-    print(password);
-    print(hashMessage(info.password));
-    if (hashMessage(info.password) === password) {
-      info.incorrect = false;
-      stage = "LOADING";
-      redirect = "FLOW";
-      storeItem("USER INFO", info);
-      end = frameCount + 10;
-      type.hide();
-      info.stage = "EMAIL";
-      type.value("");
-    } else {
-      info.incorrect = true;
-      stage = "LOADING";
-      redirect = "SIGN IN";
-      end = frameCount + 100;
-      info.stage = "EMAIL";
-      type.value("");
-    }
-  }
-}
-
 function loading() {
   background(c("White"));
 
@@ -623,16 +402,25 @@ function flow() {
   type.size(width - s * 40, height / 3);
   type.position(s * 20, scroll - height / 2.3);
 
+  textAlign(CENTER, CENTER);
   noStroke();
   fill(c("Inverse"));
-  textSize(s * 120);
+  textSize(s * 80);
   if (minute() < 10) {
     text(
-      hour() + ":0" + minute(),s * 20, scroll - height / 3.5, width - s * 40, height / 5
+      hour() + ":0" + minute(),
+      s * 20,
+      scroll - height / 3.5,
+      width - s * 40,
+      height / 5
     );
   } else {
     text(
-      hour() + ":" + minute(),s * 20, scroll - height / 3.5, width - s * 40, height / 5
+      hour() + ":" + minute(),
+      s * 20,
+      scroll - height / 3.5,
+      width - s * 40,
+      height / 5
     );
   }
   textSize(s * 30);
@@ -645,7 +433,7 @@ function flow() {
     fill(c("Inverse"));
     text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
     for (let j = 0; j < h.names[i].length; j++) {
-      fill(255,255,255,30);
+      fill(255, 255, 255, 30);
       strokeWeight(2);
       stroke(c("Grey"));
       if (choosen === h.names[i][j]) {
@@ -707,86 +495,16 @@ function flow() {
     }
   }
   if (choosen && stage !== "EXIT-FLOW") {
-    if (glide.info < (height / 5) * 2 && glide.up) {
-      glide.info += 50;
-    }
-    if (glide.info > 0 && !glide.up) {
-      glide.info -= 50;
-    }
-    if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
-      glide.up = true;
-    }
-    if (glide.info === (height / 5) * 2 && glide.up) {
-      choosen = "";
-    }
-    fill(0, 0, 0, map(glide.info, 0, (height / 5) * 2, 200, 0));
-    rect(0, 0, width, height);
-
-    push();
-    translate(0, glide.info);
-    noStroke();
-    stroke(c("Inverse"));
-    fill(c("Background"));
-    rect(0, (height / 5) * 3, width, height, 20);
-
-    fill(c("Grey"));
-    rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
-    noFill();
-    rect(width * 0.08, (height / 21) * 15, width / 4, height / 4, 10);
-    rect(width * 0.38, (height / 21) * 15, width / 4, height / 4, 10);
-    rect(width * 0.68, (height / 21) * 15, width / 4, height / 4, 10);
-
-    noStroke();
-    textAlign(CENTER, CENTER);
-    textSize(s * 30);
-    fill(c("Inverse"));
-    text(choosen, 0, (height / 5) * 3, width, height / 6);
-
-    textSize(s * 20);
-    text("Flashcards", width * 0.08, (height / 21) * 15, width / 4, height / 4);
-    text("Notes", width * 0.38, (height / 21) * 15, width / 4, height / 4);
-    text("Test", width * 0.68, (height / 21) * 15, width / 4, height / 4);
-    pop();
-
-    if (
-      button(width * 0.08, (height / 21) * 15, width / 4, height / 4) &&
-      hold === 1
-    ) {
-      for (let i = 0; i < data.flow.length; i++) {
-        if (data.flow[i][2] === choosen) {
-          file = data.flow[i][3].split("#");
-        }
+    for (let i = 0; i < data.flow.length; i++) {
+      if (data.flow[i][2] === choosen) {
+        stage = data.flow[i][4];
+        file = data.flow[i][3];
       }
-      stage = "FLASHCARDS";
-
-      saverecent(choosen);
     }
-    if (
-      button(width * 0.38, (height / 21) * 15, width / 4, height / 4) &&
-      hold === 1
-    ) {
-      for (let i = 0; i < data.flow.length; i++) {
-        if (data.flow[i][2] === choosen) {
-          file = data.flow[i][4];
-        }
-      }
-      stage = "NOTES";
-
-      saverecent(choosen);
+    if (stage !== "NOTES") {
+      file = file.split("#");
     }
-    if (
-      button(width * 0.68, (height / 21) * 15, width / 4, height / 4) &&
-      hold === 1
-    ) {
-      for (let i = 0; i < data.flow.length; i++) {
-        if (data.flow[i][2] === choosen) {
-          file = data.flow[i][3].split("#");
-        }
-      }
-      stage = "QUIZ";
-
-      saverecent(choosen);
-    }
+    saverecent(choosen);
   }
 }
 
@@ -865,134 +583,21 @@ function quiz(f) {
 
 function open() {
   choosen = params.name;
-  if (!params.type) {
-    if (choosen) {
-      if (glide.info < (height / 5) * 2 && glide.up) {
-        glide.info += 50;
-      }
-      if (glide.info > 0 && !glide.up) {
-        glide.info -= 50;
-      }
-      if (!button(0, (height / 5) * 3, width, height) && hold === 1) {
-        glide.up = true;
-      }
-      if (glide.info === (height / 5) * 2 && glide.up) {
-        choosen = "";
-      }
-      fill(0, 0, 0, map(glide.info, 0, (height / 5) * 2, 200, 0));
-      rect(0, 0, width, height);
-
-      push();
-      translate(0, glide.info);
-      noStroke();
-      stroke(c("Inverse"));
-      fill(c("Background"));
-      rect(0, (height / 5) * 3, width, height, 20);
-
-      fill(c("Grey"));
-      rect(width / 10, (height / 5) * 3.1, width - width / 5, height / 60, 20);
-      noFill();
-      rect(width * 0.08, (height / 21) * 15, width / 4, height / 4, 10);
-      rect(width * 0.38, (height / 21) * 15, width / 4, height / 4, 10);
-      rect(width * 0.68, (height / 21) * 15, width / 4, height / 4, 10);
-
-      noStroke();
-      textAlign(CENTER, CENTER);
-      textSize(s * 30);
-      fill(c("Inverse"));
-      text(choosen, 0, (height / 5) * 3, width, height / 6);
-
-      textSize(s * 20);
-      text(
-        "Flashcards",
-        width * 0.08,
-        (height / 21) * 15,
-        width / 4,
-        height / 4
-      );
-      text("Notes", width * 0.38, (height / 21) * 15, width / 4, height / 4);
-      text("Test", width * 0.68, (height / 21) * 15, width / 4, height / 4);
-      pop();
-
-      if (
-        button(width * 0.08, (height / 21) * 15, width / 4, height / 4) &&
-        hold === 1
-      ) {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][3].split("#");
-          }
-        }
-        stage = "FLASHCARDS";
-
-        saverecent(choosen);
-      }
-      if (
-        button(width * 0.38, (height / 21) * 15, width / 4, height / 4) &&
-        hold === 1
-      ) {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][4];
-          }
-        }
-        stage = "NOTES";
-
-        saverecent(choosen);
-      }
-      if (
-        button(width * 0.68, (height / 21) * 15, width / 4, height / 4) &&
-        hold === 1
-      ) {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][3].split("#");
-          }
-        }
-        stage = "QUIZ";
-
-        saverecent(choosen);
-      }
-    } else {
-      if (params.type === "FLASHCARD") {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][3].split("#");
-          }
-        }
-        stage = "FLASHCARDS";
-
-        saverecent(choosen);
-      } else if (params.type === "NOTES") {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][4];
-          }
-        }
-        stage = "NOTES";
-
-        saverecent(choosen);
-      } else if (params.type === "QUIZ") {
-        for (let i = 0; i < data.flow.length; i++) {
-          if (data.flow[i][2] === choosen) {
-            file = data.flow[i][3].split("#");
-          }
-        }
-        stage = "QUIZ";
-
-        saverecent(choosen);
-      }
+  for (let i = 0; i < data.flow.length; i++) {
+    if (data.flow[i][2] === choosen) {
+      stage = data.flow[i][4];
+      file = data.flow[i][3];
     }
   }
+  if (stage !== "NOTES") {
+    file = file.split("#");
+  }
+  saverecent(choosen);
 }
 
 //INTERFACE
 function draw() {
   textFont("Roboto");
-  if (stage === "SIGN IN") {
-    signin();
-    type.show();
-  }
   if (stage === "LOADING") {
     loading();
     type.hide();
@@ -1004,23 +609,23 @@ function draw() {
   if (stage === "FLASHCARDS") {
     flashcards();
     type.hide();
-    text("➧",s*10,s*10);
-    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
-      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    text("➧", s * 10, s * 10);
+    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
+      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
     }
   }
   if (stage === "NOTES") {
     shownotes(file);
-    text("➧",s*10,s*10);
-    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
-      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    text("➧", s * 10, s * 10);
+    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
+      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
     }
   }
   if (stage === "QUIZ") {
     quiz(file);
-    text("➧",s*10,s*10);
-    if (dist(s*10,s*10,mouseX,mouseY)<s*20 && hold===1){
-      window.location.replace("freys1er.github.io/Flow/?name="+choosen+"&type="+stage);
+    text("➧", s * 10, s * 10);
+    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
+      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
     }
   }
   if (stage === "OPEN URL") {
