@@ -49,6 +49,7 @@ let notes = {
   progress: 1,
   len: 0,
   next: 0,
+  count: 0,
 };
 
 let data = {};
@@ -128,8 +129,6 @@ function windowResized() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  textStyle(BOLD);
-
   data = {
     flow: data.flow.getArray(),
     colors: data.colors,
@@ -156,12 +155,6 @@ function setup() {
   //BACKGROUND ANIMATION
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
-  }
-
-  //Open Link
-  params = getURLParams();
-  if (params.name) {
-    stage = "OPEN URL";
   }
 }
 //FUNCTIONS
@@ -232,18 +225,23 @@ function c(x) {
 function shownotes(x) {
   background(c("Background"));
   x = x.split(/<|>/);
+  if (mouseIsPressed) {
+    scroll -= pmouseY - mouseY;
+  }
+  if (scroll < -notes.len) {
+    notes.next = true;
+    scroll = -notes.len;
+  }
   if (scroll > 0) {
     scroll = 0;
   }
-  if (scroll < -notes.len) {
-    scroll = -notes.len;
-    notes.next = true;
-  } else if (mouseIsPressed) {
-    scroll -= pmouseY - mouseY;
-  }
-  j = scroll + height / 10;
-  fill(255);
-  for (let i = 1; i < notes.progress * 2; i += 2) {
+  j = 0;
+  fill(c("Inverse"));
+  notes.count = 0;
+  i = 1;
+  push();
+  translate(0, scroll);
+  while (notes.count < notes.progress && i < x.length) {
     if (x[i] === "H1") {
       textAlign(CENTER, TOP);
       textSize(s * 70);
@@ -269,9 +267,15 @@ function shownotes(x) {
       textSize(s * 15);
       text(x[i + 1], width / 60, j, width, Infinity);
       j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "BR") {
+      notes.name = x[i + 1];
+      notes.count++;
+      j += s * 30;
     }
+    i += 2;
   }
-  notes.len = j;
+  pop();
+  notes.len = j - height * 0.7;
 
   if (notes.next) {
     textSize(s * 30);
@@ -282,7 +286,7 @@ function shownotes(x) {
     if (notes.progress * 2 < x.length) {
       fill(c("Background"));
       text(
-        "NEXT",
+        notes.name,
         width / 30,
         (height / 10) * 9,
         width - width / 15,
@@ -300,31 +304,26 @@ function shownotes(x) {
       ) {
         notes.next = false;
         notes.progress++;
-      }
-    } else {
-      fill(c("Background"));
-      text(
-        "DONE",
-        width / 30,
-        (height / 10) * 9,
-        width - width / 15,
-        height / 12
-      );
-      textStyle(NORMAL);
-      if (
-        button(
-          width / 30,
-          (height / 10) * 9,
-          width - width / 15,
-          height / 12
-        ) &&
-        hold === 1
-      ) {
-        notes.next = false;
-        notes.progress = 1;
-        stage = "FLOW";
+        if (notes.name === "DONE") {
+          notes.next = false;
+          notes.progress = 1;
+          stage = "FLOW";
+          choosen = "";
+          wait = true;
+        }
       }
     }
+  }
+
+  fill(c("Inverse"));
+  noStroke();
+  text("◄", s * 20, s * 20);
+  if (hold === 1 && button(0, 0, s * 40, s * 40)) {
+    notes.next = false;
+    notes.progress = 1;
+    stage = "FLOW";
+    choosen = "";
+    wait = true;
   }
 }
 
@@ -363,16 +362,6 @@ function flow() {
   if (search !== type.value()) {
     search = type.value();
     filtersets(search);
-  }
-
-  if (mouseY < height / 10 && hold === 1) {
-    info = {
-      email: "",
-      password: "",
-      stage: "EMAIL",
-      incorrect: false,
-    };
-    stage = "SIGN IN";
   }
 
   fill(c("Inverse"));
@@ -427,6 +416,7 @@ function flow() {
   text(type.value(), s * 20, scroll - height / 3.2, width - s * 40, height / 3);
 
   textSize(s * 25);
+  noStroke();
 
   for (let i = 0; i < h.titles.length; i++) {
     textAlign(LEFT, CENTER);
@@ -579,24 +569,20 @@ function quiz(f) {
 
   fill(c("Grey"));
   rect(width / 20, height / 20, width - width / 10, height / 3, 20);
-}
 
-function open() {
-  choosen = params.name;
-  for (let i = 0; i < data.flow.length; i++) {
-    if (data.flow[i][2] === choosen) {
-      stage = data.flow[i][4];
-      file = data.flow[i][3];
-    }
+  fill(c("Inverse"));
+  noStroke();
+  rect(width / 80, height / 4, width / 180, height / 2, 20);
+  rect(width / 40, height / 4, width / 180, height / 2, 20);
+  if (hold === 1 && mouseX < width / 20) {
+    stage = "EXIT-QUIZ";
+    wait = true;
   }
-  if (stage !== "NOTES") {
-    file = file.split("#");
-  }
-  saverecent(choosen);
 }
 
 //INTERFACE
 function draw() {
+  textStyle(BOLD);
   textFont("Roboto");
   if (stage === "LOADING") {
     loading();
@@ -609,27 +595,12 @@ function draw() {
   if (stage === "FLASHCARDS") {
     flashcards();
     type.hide();
-    text("➧", s * 10, s * 10);
-    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
-      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
-    }
   }
   if (stage === "NOTES") {
     shownotes(file);
-    text("➧", s * 10, s * 10);
-    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
-      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
-    }
   }
   if (stage === "QUIZ") {
     quiz(file);
-    text("➧", s * 10, s * 10);
-    if (dist(s * 10, s * 10, mouseX, mouseY) < s * 20 && hold === 1) {
-      window.location.replace("freys1er.github.io/Flow/?name=" + choosen);
-    }
-  }
-  if (stage === "OPEN URL") {
-    open();
   }
 
   if (stage === "EXIT-FLOW") {
@@ -650,7 +621,6 @@ function draw() {
       }
     }
   }
-
   if (mouseIsPressed) {
     hold++;
   } else {
