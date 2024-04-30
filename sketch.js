@@ -358,7 +358,6 @@ function saverecent() {
 }
 function flow() {
   background(c("Background"));
-  animation();
   if (search !== type.value()) {
     search = type.value();
     filtersets(search);
@@ -384,9 +383,9 @@ function flow() {
   }
 
   stroke(c("Grey"));
-  noFill();
+  fill(255,255,255,30);
   strokeWeight(2);
-  rect(s * 20, scroll - height / 3.5, width - s * 40, height / 5, 20);
+  rect(width/80, height / 20, width - width/40, max([scroll-height/8,0]), 20);
 
   type.size(width - s * 40, height / 3);
   type.position(s * 20, scroll - height / 2.3);
@@ -397,19 +396,11 @@ function flow() {
   textSize(s * 80);
   if (minute() < 10) {
     text(
-      hour() + ":0" + minute(),
-      s * 20,
-      scroll - height / 3.5,
-      width - s * 40,
-      height / 5
+      hour() + ":0" + minute(),width/20, height / 20, width - width/10, max([scroll-height/8,0])
     );
   } else {
     text(
-      hour() + ":" + minute(),
-      s * 20,
-      scroll - height / 3.5,
-      width - s * 40,
-      height / 5
+      hour() + ":" + minute(),width/20, height / 20, width - width/10, max([scroll-height/8,0])
     );
   }
   textSize(s * 30);
@@ -420,8 +411,12 @@ function flow() {
 
   for (let i = 0; i < h.titles.length; i++) {
     textAlign(LEFT, CENTER);
+    fill(255,255,255,30);
+    stroke(c("Grey"));
+    rect(width/80,i*s*200+scroll-s*35,h.names[i].length*s*190+s*100,s*180,20);
     fill(c("Inverse"));
-    text(h.titles[i], s * 10, i * s * 170 + scroll - s * 30);
+    rect(map(h.scroll[i],s*20,-h.names[i].length * s * 200 + s * 300,width/60,width-s*90),i*s*200+scroll+s*132,s*90,s*12,50);
+    text(h.titles[i], s * 50, i * s * 200 + scroll-s*15);
     for (let j = 0; j < h.names[i].length; j++) {
       fill(255, 255, 255, 30);
       strokeWeight(2);
@@ -430,23 +425,23 @@ function flow() {
         fill(c("Inverse"));
       }
       rect(
-        j * s * 220 + h.scroll[i],
-        i * s * 170 + scroll,
+        j * s * 200 + h.scroll[i],
+        i * s * 200 + scroll,
         s * 190,
-        s * 100,
-        20
+        s * 130,
+        10
       );
       noStroke();
 
       if (
         glide.info + 100 > (height / 5) * 2 &&
         hold > 0 &&
-        hold < 10 &&
+        hold < 5 &&
         button(
-          j * s * 220 + h.scroll[i],
-          i * s * 170 + scroll,
+          j * s * 200 + h.scroll[i],
+          i * s * 200 + scroll,
           s * 190,
-          s * 100
+          s * 130
         ) &&
         !mouseIsPressed
       ) {
@@ -463,26 +458,27 @@ function flow() {
       }
       text(
         h.names[i][j],
-        j * s * 220 + h.scroll[i],
-        i * s * 170 + scroll,
+        j * s * 200 + h.scroll[i],
+        i * s * 200 + scroll,
         s * 180,
-        s * 100
+        s * 130
       );
     }
     if (
       mouseIsPressed &&
-      mouseY > i * s * 170 + scroll &&
-      mouseY < i * s * 170 + scroll + s * 170 &&
+      mouseY > i * s * 200 + scroll &&
+      mouseY < i * s * 200 + scroll + s * 200 &&
       abs(mouseX - pmouseX) > abs(mouseY - pmouseY)
     ) {
       h.scroll[i] += mouseX - pmouseX;
-      if (h.scroll[i] < -h.names[i].length * s * 220 + s * 300) {
-        h.scroll[i] = -h.names[i].length * s * 220 + s * 300;
+      if (h.scroll[i] < -h.names[i].length * s * 200 + s * 300) {
+        h.scroll[i] = -h.names[i].length * s * 200 + s * 300;
       }
     }
-    if (h.scroll[i] > s * 50) {
-      h.scroll[i] = s * 50;
+    if (h.scroll[i] > s*20) {
+      h.scroll[i] = s*20;
     }
+    
   }
   if (choosen && stage !== "EXIT-FLOW") {
     for (let i = 0; i < data.flow.length; i++) {
