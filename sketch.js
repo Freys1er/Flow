@@ -387,8 +387,8 @@ function flow() {
     scroll = -s * 170 * h.titles.length + height / 2;
   }
 
-  stroke(c("Blue"));
-  fill(255,255,255,30);
+  stroke(c("Grey3"));
+  fill(lerpColor(c("Blue"),c("Grey4"),0.7));
   strokeWeight(2);
   rect(width/80, height / 20, width - width/40, max([scroll-height/8,0]), 20);
 
@@ -397,7 +397,7 @@ function flow() {
 
   textAlign(CENTER, CENTER);
   noStroke();
-  fill(c("Blue"));
+  fill(c("Inverse"));
   textSize(s * max([scroll-height/8,0])/3);
   if (minute() < 10) {
     text(
@@ -417,15 +417,15 @@ function flow() {
   for (let i = 0; i < h.titles.length; i++) {
     textAlign(LEFT, CENTER);
     fill(c("Background"));
-    stroke(c("Blue"));
+    stroke(c("Grey3"));
     rect(width/80,i*s*200+scroll-s*35,h.names[i].length*s*190+s*100,s*180,20);
     fill(c("Inverse"));
-    rect(map(h.scroll[i],s*20,-h.names[i].length * s * 200 + s * 300,width/60,width-s*90),i*s*200+scroll+s*132,s*90,s*12,50);
+    rect(map(h.scroll[i],s*20,-h.names[i].length * s * 200 + s * 300,width/80,min([h.names[i].length*s*190+s*100,width]))*0.85,i*s*200+scroll+s*132,s*90,s*12,50);
     text(h.titles[i], s * 50, i * s * 200 + scroll-s*15);
     for (let j = 0; j < h.names[i].length; j++) {
-      fill(c("Grey3"));
+      fill(lerpColor(c("Blue"),c("Grey4"),0.7));
       strokeWeight(2);
-      stroke(c("Blue"));
+      stroke(c("Grey4"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
