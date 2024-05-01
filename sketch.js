@@ -82,9 +82,13 @@ function filtersets(term) {
   h.names = [h.recent];
   h.r = [];
   h.colors = [];
+  
+  if (term){
+    term=term.toUpperCase();
+  }
 
   for (let i = 0; i < data.flow.length; i++) {
-    if (data.flow[i].join("").indexOf(term) > -1) {
+    if (data.flow[i][2].toUpperCase().indexOf(term) > -1) {
       x = data.flow[i][2].toUpperCase().split(" ");
       for (let j = 0; j < x.length; j++) {
         if (h.keys.indexOf(x[j]) === -1) {
@@ -127,6 +131,7 @@ function windowResized() {
 }
 
 function setup() {
+  angleMode(DEGREES);
   createCanvas(windowWidth, windowHeight);
 
   data = {
@@ -382,7 +387,7 @@ function flow() {
     scroll = -s * 170 * h.titles.length + height / 2;
   }
 
-  stroke(c("Grey"));
+  stroke(c("Blue"));
   fill(255,255,255,30);
   strokeWeight(2);
   rect(width/80, height / 20, width - width/40, max([scroll-height/8,0]), 20);
@@ -392,15 +397,15 @@ function flow() {
 
   textAlign(CENTER, CENTER);
   noStroke();
-  fill(c("Inverse"));
-  textSize(s * 80);
+  fill(c("Blue"));
+  textSize(s * max([scroll-height/8,0])/3);
   if (minute() < 10) {
     text(
-      hour() + ":0" + minute(),width/20, height / 20, width - width/10, max([scroll-height/8,0])
+      hour() + ":0" + minute(),width/80, height / 20, width - width/40, max([scroll-height/8,0])
     );
   } else {
     text(
-      hour() + ":" + minute(),width/20, height / 20, width - width/10, max([scroll-height/8,0])
+      hour() + ":" + minute(),width/80, height / 20, width - width/40, max([scroll-height/8,0])
     );
   }
   textSize(s * 30);
@@ -411,16 +416,16 @@ function flow() {
 
   for (let i = 0; i < h.titles.length; i++) {
     textAlign(LEFT, CENTER);
-    fill(255,255,255,30);
-    stroke(c("Grey"));
+    fill(c("Background"));
+    stroke(c("Blue"));
     rect(width/80,i*s*200+scroll-s*35,h.names[i].length*s*190+s*100,s*180,20);
     fill(c("Inverse"));
     rect(map(h.scroll[i],s*20,-h.names[i].length * s * 200 + s * 300,width/60,width-s*90),i*s*200+scroll+s*132,s*90,s*12,50);
     text(h.titles[i], s * 50, i * s * 200 + scroll-s*15);
     for (let j = 0; j < h.names[i].length; j++) {
-      fill(255, 255, 255, 30);
+      fill(c("Grey3"));
       strokeWeight(2);
-      stroke(c("Grey"));
+      stroke(c("Blue"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
