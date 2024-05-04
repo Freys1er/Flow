@@ -446,7 +446,7 @@ function flow() {
       if (
         glide.info + 100 > (height / 5) * 2 &&
         hold > 0 &&
-        hold < 5 &&
+        hold < 10 &&
         button(
           j * s * 200 + h.scroll[i],
           i * s * 200 + scroll,
