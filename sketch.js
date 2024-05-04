@@ -1,7 +1,8 @@
+p5.disableFriendlyErrors = true;
 //Notes
 
 //
-p5.disableFriendlyErrors = true;
+
 //VARIABLES
 let theme = {
   network: "Blue",
@@ -20,6 +21,7 @@ let sets = [];
 let total = [];
 let scroll = 0;
 let redirect = "HOME";
+let cookies;
 
 //FLASHCARDS
 let h = {
@@ -161,6 +163,8 @@ function setup() {
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
   }
+  
+  cookies = getItem("Accepted_Cookies");
 }
 //FUNCTIONS
 function todate(x) {
@@ -329,6 +333,7 @@ function shownotes(x) {
     stage = "FLOW";
     choosen = "";
     wait = true;
+    scroll=height / 3;
   }
 }
 
@@ -563,22 +568,7 @@ function flashcards() {
     stage = "EXIT-FLOW";
     wait = true;
   }
-}
-
-function quiz(f) {
-  background(c("Background"));
-
-  fill(c("Grey"));
-  rect(width / 20, height / 20, width - width / 10, height / 3, 20);
-
-  fill(c("Inverse"));
-  noStroke();
-  rect(width / 80, height / 4, width / 180, height / 2, 20);
-  rect(width / 40, height / 4, width / 180, height / 2, 20);
-  if (hold === 1 && mouseX < width / 20) {
-    stage = "EXIT-QUIZ";
-    wait = true;
-  }
+  
 }
 
 //INTERFACE
@@ -599,9 +589,7 @@ function draw() {
   }
   if (stage === "NOTES") {
     shownotes(file);
-  }
-  if (stage === "QUIZ") {
-    quiz(file);
+    type.hide();
   }
 
   if (stage === "EXIT-FLOW") {
@@ -612,6 +600,7 @@ function draw() {
     flashcards();
     pop();
     if (hold === 0) {
+      scroll=height/3;
       if (mouseX < width / 2) {
         stage = "FLASHCARDS";
       } else {
@@ -622,6 +611,19 @@ function draw() {
       }
     }
   }
+  
+  if (!cookies){
+    fill(0,0,0,200);
+    rect(0,0,width,height);
+    fill(c("Inverse"));
+    text("By continuing to use this website, you consent to cookies\n\n🍪",0,0,width,height);
+    
+    if (mouseIsPressed && frameCount>10){
+      cookies=true;
+      storeItem("Accepted_Cookies",cookies);
+    }
+  }
+  
   if (mouseIsPressed) {
     hold++;
   } else {
