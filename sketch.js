@@ -204,6 +204,7 @@ function c(x) {
     let list = split(data.colors.getColumn(x)[0], ",");
     return color(list[0], list[1], list[2]);
   }else{
+    console.warn("Color '"+x+"' was not found, reverted to red");
     return color(255,0,0);
   }
 }
