@@ -63,11 +63,6 @@ function preload() {
     "header",
     "csv"
   );
-  data.auth = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=1955007359&single=true&output=csv",
-    "header",
-    "csv"
-  );
 }
 
 //MORE SETUp
@@ -116,18 +111,6 @@ function filtersets(term) {
   }
 }
 
-function hashMessage(message) {
-  let hash = 0;
-  for (let i = 0; i < message.length; i++) {
-    // Get the ASCII value of each character
-    const charCode = message.charCodeAt(i);
-    // Combine the character codes
-    hash = (hash << 5) - hash + charCode;
-  }
-  // Ensure the hash is positive
-  return str(Math.abs(hash));
-}
-
 function mouseWheel(event) {
   scroll -= event.delta;
 }
@@ -142,8 +125,7 @@ function setup() {
 
   data = {
     flow: data.flow.getArray(),
-    colors: data.colors,
-    auth: data.auth.getArray(),
+    colors: data.colors
   };
   glide.info = (height / 5) * 2;
 
