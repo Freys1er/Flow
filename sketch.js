@@ -2,7 +2,7 @@ p5.disableFriendlyErrors = true;
 
 //VARIABLES
 let theme = {
-  network: "Teal"
+  network: "Cyan"
 };
 
 let stage = "FLOW";
@@ -387,7 +387,7 @@ function flow() {
   }
 
   stroke(c("Grey3"));
-  fill(c("Teal"));
+  fill(c("Cyan"));
   strokeWeight(2);
   rect(
     width / 80,
@@ -457,7 +457,7 @@ function flow() {
     text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
     for (let j = 0; j < h.names[i].length; j++) {
       fill(
-        c("Teal")
+        c("Cyan")
       );
       strokeWeight(2);
       stroke(c("Grey4"));
