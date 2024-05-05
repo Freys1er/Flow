@@ -1,6 +1,4 @@
-//Notes
-
-//
+p5.disableFriendlyErrors = true;
 
 //VARIABLES
 let theme = {
