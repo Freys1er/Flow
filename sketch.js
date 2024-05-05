@@ -1,14 +1,9 @@
 p5.disableFriendlyErrors = true;
 
-//VARIABLES
-let theme = {
-  network: "Lines"
-};
-
+//VARS
 let stage = "FLOW";
 let choosen = null;
 let points = [];
-let dark = true;
 let s = 0;
 let hold = 0;
 let end = 0;
@@ -57,7 +52,7 @@ function preload() {
     "csv"
   );
   data.colors = loadTable(
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ0JHVAqwYCw7f0qTELagJOXXB38bihDE94NdtY8F4-qQFvGJV2ATjHeE_d4ovCvn9DXJ2VbPB-mFI/pub?gid=1160900751&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOMxqxDvZYRq4eCecjgaq49t28A5go4QuLUbf4meYu_ggtZvdpD3j2mr8gcRStObQO5gzkSOPjRPiI/pub?gid=875058641&single=true&output=csv",
     "header",
     "csv"
   );
@@ -193,7 +188,7 @@ function animation() {
     for (let j = i + 1; j < points.length; j++) {
       let d = dist(points[i][0], points[i][1], points[j][0], points[j][1]);
       stroke(
-        lerpColor(color(0, 0, 0, 0), c(theme.network), map(d, 0, s * 300, 1, 0))
+        lerpColor(color(0, 0, 0, 0), c("Lines"), map(d, 0, s * 300, 1, 0))
       );
       line(points[i][0], points[i][1], points[j][0], points[j][1]);
     }
@@ -205,13 +200,12 @@ function button(x, y, w, h) {
 
 //COLORS
 function c(x) {
-  if (dark) {
-    dark = 1;
-  } else {
-    dark = 0;
+  if (data.colors.getColumn(x)[0]){
+    let list = split(data.colors.getColumn(x)[0], ",");
+    return color(list[0], list[1], list[2]);
+  }else{
+    return color(255,0,0);
   }
-  let list = split(data.colors.getColumn(x)[dark], ",");
-  return color(list[0], list[1], list[2]);
 }
 
 //APPS
@@ -402,7 +396,7 @@ function flow() {
 
   textAlign(CENTER, CENTER);
   noStroke();
-  fill(c("Inverse"));
+  fill(c("SetsText"));
   textSize((s * max([scroll - height / 8, 0])) / 3);
   if (minute() < 10) {
     text(
@@ -432,7 +426,7 @@ function flow() {
     textSize(s * 25);
     textAlign(LEFT, CENTER);
     fill(c("Background"));
-    stroke(c("Grey3"));
+    stroke(c("Border"));
     rect(
       width / 80,
       i * s * 200 + scroll - s * 35,
@@ -440,7 +434,7 @@ function flow() {
       s * 180,
       20
     );
-    fill(c("Inverse"));
+    fill(c("Scroll"));
     rect(
       map(
         h.scroll[i],
@@ -460,7 +454,7 @@ function flow() {
         c("Sets")
       );
       strokeWeight(2);
-      stroke(c("Grey4"));
+      stroke(c("Border"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
