@@ -1,4 +1,3 @@
-p5.disableFriendlyErrors = true;
 //Notes
 
 //
@@ -84,27 +83,33 @@ function filtersets(term) {
   h.names = [h.recent];
   h.r = [];
   h.colors = [];
-  
-  if (term){
-    term=term.toUpperCase();
+
+  if (term) {
+    term = term.toUpperCase();
+  } else {
+    term = " ";
   }
 
   for (let i = 0; i < data.flow.length; i++) {
-    if (data.flow[i][2].toUpperCase().indexOf(term) > -1) {
+    tags = data.flow[i].slice(0, 3).join(" ");
+    if (tags.toUpperCase().indexOf(term) > -1) {
       x = data.flow[i][2].toUpperCase().split(" ");
       for (let j = 0; j < x.length; j++) {
         if (h.keys.indexOf(x[j]) === -1) {
           h.keys.push(x[j]);
           h.r.push([]);
         }
-        h.r[h.keys.indexOf(x[j])].push(data.flow[i][2]);
+        h.r[h.keys.indexOf(x[j])].push({
+          name: data.flow[i][2],
+          email: data.flow[i][1],
+          date: data.flow[i][0],
+        });
       }
     }
   }
-
   for (let i = 100; i > 0; i--) {
     for (let j = 0; j < h.keys.length; j++) {
-      if (h.r[j].length === i && h.keys[j].length > 2) {
+      if (h.r[j].length === i && (h.keys[j].length > 4 || term !== " ")) {
         h.titles.push(h.keys[j]);
         h.names.push(h.r[j]);
         h.scroll.push(s * 50);
@@ -112,6 +117,7 @@ function filtersets(term) {
     }
   }
 }
+
 function hashMessage(message) {
   let hash = 0;
   for (let i = 0; i < message.length; i++) {
@@ -163,7 +169,7 @@ function setup() {
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
   }
-  
+
   cookies = getItem("Accepted_Cookies");
 }
 //FUNCTIONS
@@ -222,11 +228,11 @@ function button(x, y, w, h) {
 //COLORS
 function c(x) {
   if (dark) {
-    i = 1;
+    dark = 1;
   } else {
-    i = 0;
+    dark = 0;
   }
-  let list = split(data.colors.getColumn(x)[i], ",");
+  let list = split(data.colors.getColumn(x)[dark], ",");
   return color(list[0], list[1], list[2]);
 }
 
@@ -276,6 +282,24 @@ function shownotes(x) {
       textSize(s * 15);
       text(x[i + 1], width / 60, j, width, Infinity);
       j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
+    } else if (x[i] === "BT") {
+      textAlign(CENTER, TOP);
+      textSize(s * 25);
+
+      rect(width / 6, j + s * 12, width - width / 3, height / 20, 20);
+      if (
+        button(width / 6, j + s * 12, width - width / 3, height / 20)
+      ) {
+        print(x[i + 1].split("|")[1]);
+        window.open(x[i + 1].split("|")[1]);
+        fill(c("Blue"));
+      }
+
+      //fill(c("Blue"));
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1;
+      text(x[i + 1].split("|")[0], width / 60, j, width, Infinity);
+      fill(c("Inverse"));
+      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
     } else if (x[i] === "BR") {
       notes.name = x[i + 1];
       notes.count++;
@@ -285,6 +309,14 @@ function shownotes(x) {
   }
   pop();
   notes.len = j - height * 0.7;
+
+  if (notes.count > notes.progress) {
+    notes.next = false;
+    notes.progress = 1;
+    stage = "FLOW";
+    choosen = "";
+    wait = true;
+  }
 
   if (notes.next) {
     textSize(s * 30);
@@ -333,7 +365,7 @@ function shownotes(x) {
     stage = "FLOW";
     choosen = "";
     wait = true;
-    scroll=height / 3;
+    scroll = height / 3;
   }
 }
 
@@ -366,8 +398,19 @@ function saverecent() {
   h.recent.splice(0, 0, choosen);
   storeItem("Recent_Sets", h.recent);
 }
+function toColor(inputString) {
+  // Calculate the sum of ASCII values of characters in the string
+  let sum = 0;
+  for (let i = 0; i < inputString.length; i++) {
+    sum += inputString.charCodeAt(i);
+  }
+
+  return color(int((sum + 85) % 255), int(sum % 255), int((sum + 170) % 255));
+}
+
 function flow() {
   background(c("Background"));
+
   if (search !== type.value()) {
     search = type.value();
     filtersets(search);
@@ -388,14 +431,20 @@ function flow() {
   if (scroll > height / 3) {
     scroll = height / 3;
   }
-  if (scroll < -s * 170 * h.titles.length + height / 2) {
-    scroll = -s * 170 * h.titles.length + height / 2;
+  if (scroll < -h.titles.length * s * 200 + height / 2) {
+    scroll = -h.titles.length * s * 200 + height / 2;
   }
 
   stroke(c("Grey3"));
-  fill(lerpColor(c("Blue"),c("Grey4"),0.7));
+  fill(lerpColor(c("Blue"), c("Grey4"), 0.7));
   strokeWeight(2);
-  rect(width/80, height / 20, width - width/40, max([scroll-height/8,0]), 20);
+  rect(
+    width / 80,
+    height / 20,
+    width - width / 40,
+    max([scroll - height / 8, 0]),
+    20
+  );
 
   type.size(width - s * 40, height / 3);
   type.position(s * 20, scroll - height / 2.3);
@@ -403,37 +452,72 @@ function flow() {
   textAlign(CENTER, CENTER);
   noStroke();
   fill(c("Inverse"));
-  textSize(s * max([scroll-height/8,0])/3);
+  textSize((s * max([scroll - height / 8, 0])) / 3);
   if (minute() < 10) {
     text(
-      hour() + ":0" + minute(),width/80, height / 20, width - width/40, max([scroll-height/8,0])
+      hour() + ":0" + minute(),
+      width / 80,
+      height / 20,
+      width - width / 40,
+      max([scroll - height / 8, 0])
     );
   } else {
     text(
-      hour() + ":" + minute(),width/80, height / 20, width - width/40, max([scroll-height/8,0])
+      hour() + ":" + minute(),
+      width / 80,
+      height / 20,
+      width - width / 40,
+      max([scroll - height / 8, 0])
     );
   }
-  textSize(s * 30);
-  text(type.value(), s * 20, scroll - height / 3.2, width - s * 40, height / 3);
-
-  textSize(s * 25);
+  textSize(s * 15);
+  text(type.value(), s * 20, scroll - height / 3.7, width - s * 40, height / 3);
+  if (type.value().length <= 1) {
+    text("Search", s * 20, scroll - height / 3.7, width - s * 40, height / 3);
+  }
   noStroke();
 
   for (let i = 0; i < h.titles.length; i++) {
+    textSize(s * 25);
     textAlign(LEFT, CENTER);
     fill(c("Background"));
     stroke(c("Grey3"));
-    rect(width/80,i*s*200+scroll-s*35,h.names[i].length*s*190+s*100,s*180,20);
+    rect(
+      width / 80,
+      i * s * 200 + scroll - s * 35,
+      h.names[i].length * s * 190 + s * 100,
+      s * 180,
+      20
+    );
     fill(c("Inverse"));
-    rect(map(h.scroll[i],s*20,-h.names[i].length * s * 200 + s * 300,width/80,min([h.names[i].length*s*190+s*100,width]))*0.85,i*s*200+scroll+s*132,s*90,s*12,50);
-    text(h.titles[i], s * 50, i * s * 200 + scroll-s*15);
+    rect(
+      map(
+        h.scroll[i],
+        s * 20,
+        -h.names[i].length * s * 200 + s * 300,
+        width / 80,
+        min([h.names[i].length * s * 190 + s * 100, width])
+      ) * 0.85,
+      i * s * 200 + scroll + s * 132,
+      s * 90,
+      s * 12,
+      50
+    );
+    text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
     for (let j = 0; j < h.names[i].length; j++) {
-      fill(lerpColor(c("Blue"),c("Grey4"),0.7));
+      fill(
+        lerpColor(
+          lerpColor(toColor(h.names[i][j].email), c("Blue"), 0.5),
+          c("Background"),
+          0.5
+        )
+      );
       strokeWeight(2);
       stroke(c("Grey4"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
+
       rect(
         j * s * 200 + h.scroll[i],
         i * s * 200 + scroll,
@@ -466,10 +550,29 @@ function flow() {
       } else {
         fill(c("Inverse"));
       }
+
+      textSize(s * 20);
       text(
-        h.names[i][j],
+        h.names[i][j].name,
         j * s * 200 + h.scroll[i],
         i * s * 200 + scroll,
+        s * 180,
+        s * 130
+      );
+
+      textSize(s * 12);
+      text(
+        h.names[i][j].email,
+        j * s * 200 + h.scroll[i],
+        i * s * 200 + scroll + s * 40,
+        s * 180,
+        s * 130
+      );
+      textSize(s * 10);
+      text(
+        h.names[i][j].date,
+        j * s * 200 + h.scroll[i],
+        i * s * 200 + scroll + s * 55,
         s * 180,
         s * 130
       );
@@ -485,14 +588,13 @@ function flow() {
         h.scroll[i] = -h.names[i].length * s * 200 + s * 300;
       }
     }
-    if (h.scroll[i] > s*20) {
-      h.scroll[i] = s*20;
+    if (h.scroll[i] > s * 20) {
+      h.scroll[i] = s * 20;
     }
-    
   }
   if (choosen && stage !== "EXIT-FLOW") {
     for (let i = 0; i < data.flow.length; i++) {
-      if (data.flow[i][2] === choosen) {
+      if (data.flow[i][2] === choosen.name) {
         stage = data.flow[i][4];
         file = data.flow[i][3];
       }
@@ -513,7 +615,7 @@ function flashcards() {
   textSize(s * 20);
   fill(c("Inverse"));
   noStroke();
-  text(choosen, width / 2, height / 40);
+  text(choosen.name, width / 2, height / 40);
   textSize(s * 25);
   if (ans) {
     text(file[0] + "\n\n\n" + file[1], shift * 3, 0, width, height);
@@ -568,7 +670,6 @@ function flashcards() {
     stage = "EXIT-FLOW";
     wait = true;
   }
-  
 }
 
 //INTERFACE
@@ -600,7 +701,7 @@ function draw() {
     flashcards();
     pop();
     if (hold === 0) {
-      scroll=height/3;
+      scroll = height / 3;
       if (mouseX < width / 2) {
         stage = "FLASHCARDS";
       } else {
@@ -611,19 +712,25 @@ function draw() {
       }
     }
   }
-  
-  if (!cookies){
-    fill(0,0,0,200);
-    rect(0,0,width,height);
+
+  if (!cookies) {
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height);
     fill(c("Inverse"));
-    text("By continuing to use this website, you consent to cookies\n\n🍪",0,0,width,height);
-    
-    if (mouseIsPressed && frameCount>10){
-      cookies=true;
-      storeItem("Accepted_Cookies",cookies);
+    text(
+      "By continuing to use this website, you consent to cookies\n\n🍪",
+      0,
+      0,
+      width,
+      height
+    );
+
+    if (mouseIsPressed && frameCount > 10) {
+      cookies = true;
+      storeItem("Accepted_Cookies", cookies);
     }
   }
-  
+
   if (mouseIsPressed) {
     hold++;
   } else {
