@@ -2,9 +2,7 @@ p5.disableFriendlyErrors = true;
 
 //VARIABLES
 let theme = {
-  network: "Blue",
-  navbar: "Blue",
-  clock: "Analogue",
+  network: "Teal"
 };
 
 let stage = "FLOW";
@@ -262,24 +260,6 @@ function shownotes(x) {
       textSize(s * 15);
       text(x[i + 1], width / 60, j, width, Infinity);
       j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
-    } else if (x[i] === "BT") {
-      textAlign(CENTER, TOP);
-      textSize(s * 25);
-
-      rect(width / 6, j + s * 12, width - width / 3, height / 20, 20);
-      if (
-        button(width / 6, j + s * 12, width - width / 3, height / 20)
-      ) {
-        print(x[i + 1].split("|")[1]);
-        window.open(x[i + 1].split("|")[1]);
-        fill(c("Blue"));
-      }
-
-      //fill(c("Blue"));
-      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1;
-      text(x[i + 1].split("|")[0], width / 60, j, width, Infinity);
-      fill(c("Inverse"));
-      j += ceil(textWidth(x[i + 1]) / width) * textAscent() * 1.6;
     } else if (x[i] === "BR") {
       notes.name = x[i + 1];
       notes.count++;
@@ -378,15 +358,6 @@ function saverecent() {
   h.recent.splice(0, 0, choosen);
   storeItem("Recent_Sets", h.recent);
 }
-function toColor(inputString) {
-  // Calculate the sum of ASCII values of characters in the string
-  let sum = 0;
-  for (let i = 0; i < inputString.length; i++) {
-    sum += inputString.charCodeAt(i);
-  }
-
-  return color(int((sum + 85) % 255), int(sum % 255), int((sum + 170) % 255));
-}
 
 function flow() {
   background(c("Background"));
@@ -416,7 +387,7 @@ function flow() {
   }
 
   stroke(c("Grey3"));
-  fill(lerpColor(c("Blue"), c("Grey4"), 0.7));
+  fill(c("Teal"));
   strokeWeight(2);
   rect(
     width / 80,
@@ -486,11 +457,7 @@ function flow() {
     text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
     for (let j = 0; j < h.names[i].length; j++) {
       fill(
-        lerpColor(
-          lerpColor(toColor(h.names[i][j].email), c("Blue"), 0.5),
-          c("Background"),
-          0.5
-        )
+        c("Teal")
       );
       strokeWeight(2);
       stroke(c("Grey4"));
