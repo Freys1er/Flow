@@ -2,7 +2,7 @@ p5.disableFriendlyErrors = true;
 
 //VARIABLES
 let theme = {
-  network: "Cyan"
+  network: "Lines"
 };
 
 let stage = "FLOW";
@@ -229,7 +229,7 @@ function shownotes(x) {
     scroll = 0;
   }
   j = 0;
-  fill(c("Inverse"));
+  fill(c("Text"));
   notes.count = 0;
   i = 1;
   push();
@@ -282,7 +282,7 @@ function shownotes(x) {
     textSize(s * 30);
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
-    fill(c("Inverse"));
+    fill(c("Button"));
     rect(width / 30, (height / 10) * 9, width - width / 15, height / 12, 10);
     if (notes.progress * 2 < x.length) {
       fill(c("Background"));
@@ -316,7 +316,7 @@ function shownotes(x) {
     }
   }
 
-  fill(c("Inverse"));
+  fill(c("Back"));
   noStroke();
   text("◄", s * 20, s * 20);
   if (hold === 1 && button(0, 0, s * 40, s * 40)) {
@@ -387,7 +387,7 @@ function flow() {
   }
 
   stroke(c("Grey3"));
-  fill(c("Cyan"));
+  fill(c("Sets"));
   strokeWeight(2);
   rect(
     width / 80,
@@ -457,7 +457,7 @@ function flow() {
     text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
     for (let j = 0; j < h.names[i].length; j++) {
       fill(
-        c("Cyan")
+        c("Sets")
       );
       strokeWeight(2);
       stroke(c("Grey4"));
@@ -493,9 +493,9 @@ function flow() {
 
       textAlign(CENTER, CENTER);
       if (choosen === h.names[i][j]) {
-        fill(c("Background"));
+        fill(c("InverseSetsText"));
       } else {
-        fill(c("Inverse"));
+        fill(c("SetsText"));
       }
 
       textSize(s * 20);
@@ -560,7 +560,7 @@ function flashcards() {
 
   textAlign(CENTER, CENTER);
   textSize(s * 20);
-  fill(c("Inverse"));
+  fill(c("SetsTitle"));
   noStroke();
   text(choosen.name, width / 2, height / 40);
   textSize(s * 25);
@@ -608,7 +608,7 @@ function flashcards() {
   }
 
   textAlign(LEFT, TOP);
-  fill(c("Inverse"));
+  fill(c("Exit"));
   noStroke();
   rect(width / 80, height / 4, width / 180, height / 2, 20);
   rect(width / 40, height / 4, width / 180, height / 2, 20);
