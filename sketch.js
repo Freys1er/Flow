@@ -380,9 +380,8 @@ function flow() {
   if (scroll < -h.titles.length * s * 200 + height / 2) {
     scroll = -h.titles.length * s * 200 + height / 2;
   }
-
-  stroke(c("Grey3"));
-  fill(c("Sets"));
+  stroke(c("Cyan"));
+  fill(c("Background"));
   strokeWeight(2);
   rect(
     width / 80,
@@ -422,7 +421,6 @@ function flow() {
     text("Search", s * 20, scroll - height / 3.7, width - s * 40, height / 3);
   }
   noStroke();
-
   for (let i = 0; i < h.titles.length; i++) {
     textSize(s * 25);
     textAlign(LEFT, CENTER);
@@ -435,7 +433,7 @@ function flow() {
       s * 180,
       20
     );
-    fill(c("Scroll"));
+    fill(c("Border"));
     rect(
       map(
         h.scroll[i],
@@ -444,22 +442,22 @@ function flow() {
         width / 80,
         min([h.names[i].length * s * 190 + s * 100, width])
       ) * 0.85,
-      i * s * 200 + scroll + s * 132,
+      i * s * 200 + scroll + s * 137,
       s * 90,
-      s * 12,
+      s * 8,
       50
     );
+    fill(c("Titles"));
     text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
     for (let j = 0; j < h.names[i].length; j++) {
       fill(
-        c("Sets")
+        c("Background")
       );
       strokeWeight(2);
-      stroke(c("Border"));
+      stroke(c("Cyan"));
       if (choosen === h.names[i][j]) {
         fill(c("Inverse"));
       }
-
       rect(
         j * s * 200 + h.scroll[i],
         i * s * 200 + scroll,
@@ -534,6 +532,7 @@ function flow() {
       h.scroll[i] = s * 20;
     }
   }
+  
   if (choosen && stage !== "EXIT-FLOW") {
     for (let i = 0; i < data.flow.length; i++) {
       if (data.flow[i][2] === choosen.name) {
