@@ -214,7 +214,7 @@ function shownotes(x) {
   background(c("Background"));
   x = x.split(/<|>/);
   if (mouseIsPressed) {
-    scroll -= pmouseY - mouseY;
+    velocity -= pmouseY - mouseY;
   }
   if (scroll < -notes.len) {
     notes.next = true;
@@ -353,8 +353,10 @@ function saverecent() {
   h.recent.splice(0, 0, choosen);
   storeItem("Recent_Sets", h.recent);
 }
-
+let velocity = 0;
 function flow() {
+  scroll -= velocity;
+  velocity *= 0.92;
   background(c("Background"));
 
   if (search !== type.value()) {
@@ -372,7 +374,7 @@ function flow() {
   );
 
   if (abs(mouseX - pmouseX) < abs(mouseY - pmouseY) && mouseIsPressed) {
-    scroll -= pmouseY - mouseY;
+    velocity = pmouseY - mouseY;
   }
   if (scroll > height / 3) {
     scroll = height / 3;
@@ -384,10 +386,10 @@ function flow() {
   fill(c("Background"));
   strokeWeight(2);
   rect(
-    width / 80,
-    height / 20,
+    width /80,
+    scroll-height / 3.5,
     width - width / 40,
-    max([scroll - height / 8, 0]),
+    height/4.5,
     20
   );
 
@@ -397,22 +399,18 @@ function flow() {
   textAlign(CENTER, CENTER);
   noStroke();
   fill(c("SetsText"));
-  textSize((s * max([scroll - height / 8, 0])) / 3);
+  textSize(s * 100);
   if (minute() < 10) {
     text(
       hour() + ":0" + minute(),
-      width / 80,
-      height / 20,
-      width - width / 40,
-      max([scroll - height / 8, 0])
+      width / 2,
+      scroll-height/5.5
     );
   } else {
     text(
       hour() + ":" + minute(),
-      width / 80,
-      height / 20,
-      width - width / 40,
-      max([scroll - height / 8, 0])
+      width/2,
+      scroll-height/5.5
     );
   }
   textSize(s * 15);
@@ -469,15 +467,14 @@ function flow() {
 
       if (
         glide.info + 100 > (height / 5) * 2 &&
-        hold > 0 &&
-        hold < 5 &&
+        hold === 1 && 
         button(
           j * s * 200 + h.scroll[i],
           i * s * 200 + scroll,
           s * 190,
           s * 130
         ) &&
-        !mouseIsPressed
+        abs(pmouseY-mouseY)<1
       ) {
         choosen = h.names[i][j];
         glide.up = false;
