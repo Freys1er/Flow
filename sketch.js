@@ -142,8 +142,6 @@ function setup() {
   for (let i = 0; i < 20; i++) {
     points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
   }
-
-  cookies = getItem("Accepted_Cookies");
 }
 //FUNCTIONS
 function todate(x) {
@@ -648,24 +646,6 @@ function draw() {
         stage = "FLOW";
         glide.info = (height / 5) * 2;
       }
-    }
-  }
-
-  if (!cookies) {
-    fill(0, 0, 0, 200);
-    rect(0, 0, width, height);
-    fill(c("Inverse"));
-    text(
-      "By continuing to use this website, you consent to cookies\n\n🍪",
-      0,
-      0,
-      width,
-      height
-    );
-
-    if (mouseIsPressed && frameCount > 10) {
-      cookies = true;
-      storeItem("Accepted_Cookies", cookies);
     }
   }
 
