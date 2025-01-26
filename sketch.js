@@ -382,7 +382,7 @@ function flow() {
 
     textSize(s * 30);
     if (sets[i][4] === "NOTES") {
-      text("Notes", width / 2, i * height * 0.22 + scroll.pos + height / 30);
+      text("Notes", width / 2, i * height * 0.22 + scroll.pos + height / 10);
     } else {
       text(
         floor(sets[i][3].split("#").length / 2) + " flashcards",
