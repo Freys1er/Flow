@@ -96,7 +96,12 @@ function windowResized() {
 
 function setup() {
   angleMode(DEGREES);
-  createCanvas(windowWidth, windowHeight);
+   if (!WEBGL.isSupported()) {
+    console.log('WebGL not supported, falling back to 2D renderer');
+    createCanvas(windowWidth, windowHeight);
+  } else {
+    createCanvas(windowWidth, windowHeight, WEBGL);
+  }
 
   data = {
     flow: data.flow.getArray(),
