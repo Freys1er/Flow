@@ -59,7 +59,14 @@ function preload() {
     "csv"
   );
 }
-
+function isWebGLSupported() {
+  try {
+    var canvas = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+  } catch (e) {
+    return false;
+  }
+}
 function contains(a, b) {
   // Convert both strings to lowercase
   let lowerA = a.toLowerCase();
@@ -96,7 +103,7 @@ function windowResized() {
 
 function setup() {
   angleMode(DEGREES);
-   if (!WEBGL.isSupported()) {
+   if (!isWebGLSupported()) {
     console.log('WebGL not supported, falling back to 2D renderer');
     createCanvas(windowWidth, windowHeight);
   } else {
