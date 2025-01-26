@@ -1,5 +1,5 @@
 p5.disableFriendlyErrors = true;
-
+let user_memory = 2;
 //VARS
 let stage = "FLOW";
 let choosen = null;
@@ -59,22 +59,15 @@ function preload() {
     "csv"
   );
 }
-function isWebGLSupported() {
-  try {
-    var canvas = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-  } catch (e) {
-    return false;
-  }
-}
+
 function contains(a, b) {
   // Convert both strings to lowercase
   let lowerA = a.toLowerCase();
   let lowerB = b.toLowerCase();
 
   // Remove special characters from both strings
-  let cleanedA = lowerA.replace(/[^a-z0-9]/gi, '');
-  let cleanedB = lowerB.replace(/[^a-z0-9]/gi, '');
+  let cleanedA = lowerA.replace(/[^a-z0-9]/gi, "");
+  let cleanedB = lowerB.replace(/[^a-z0-9]/gi, "");
 
   // Check if the cleaned string a contains the cleaned string b
   return cleanedA.includes(cleanedB);
@@ -82,12 +75,12 @@ function contains(a, b) {
 
 //filters
 function filtersets(term) {
-  if (!term){
-    term = '';
+  if (!term) {
+    term = "";
   }
   sets = [];
-  for (let i = 0;i<data.flow.length;i++){
-    if (contains(data.flow[i].join(""),term)){
+  for (let i = 0; i < data.flow.length; i++) {
+    if (contains(data.flow[i].join(""), term)) {
       sets.push(data.flow[i]);
     }
   }
@@ -103,12 +96,7 @@ function windowResized() {
 
 function setup() {
   angleMode(DEGREES);
-   if (!isWebGLSupported()) {
-    console.log('WebGL not supported, falling back to 2D renderer');
-    createCanvas(windowWidth, windowHeight);
-  } else {
-    createCanvas(windowWidth, windowHeight, WEBGL);
-  }
+  createCanvas(windowWidth, windowHeight);
 
   data = {
     flow: data.flow.getArray(),
@@ -390,11 +378,7 @@ function flow() {
     noStroke();
     textSize(min(s * 50, (width / sets[i][2].length) * 2));
     fill(c("SetsText"));
-    text(
-      sets[i][2],
-      width / 2,
-      i * height * 0.22 + scroll.pos + height / 40
-    );
+    text(sets[i][2], width / 2, i * height * 0.22 + scroll.pos + height / 40);
 
     textSize(s * 30);
     if (sets[i][4] === "NOTES") {
@@ -409,11 +393,7 @@ function flow() {
 
     textSize(s * 15);
 
-    text(
-      sets[i][0],
-      width / 4,
-      i * height * 0.22 + scroll.pos + height / 7
-    );
+    text(sets[i][0], width / 4, i * height * 0.22 + scroll.pos + height / 7);
     text(
       sets[i][1],
       (width / 4) * 3,
@@ -423,7 +403,7 @@ function flow() {
     if (
       hold < 10 &&
       hold > 0 &&
-      abs(pmouseX - mouseX) > abs(pmouseY - mouseY) &&
+      abs(pmouseX - mouseX) >= abs(pmouseY - mouseY) &&
       !mouseIsPressed &&
       button(
         width / 80,
@@ -438,12 +418,23 @@ function flow() {
 
       if (stage !== "NOTES") {
         file = file.split("#");
+        done = [];
+        for (let i = 0; i < file.length; i += 2) {
+          done.push({
+            question: file[i],
+            answer: file[i + 1],
+            rating: 0,
+          });
+        }
+        file = done;
+        print(file);
       }
       saverecent(choosen);
     }
   }
 }
-
+let timer_start = 0;
+let card_number = 0;
 function flashcards() {
   fill(c("Background"));
   rect(0, 0, width, height);
@@ -454,16 +445,15 @@ function flashcards() {
   noStroke();
   text(choosen.name, width / 2, height / 40);
   textSize(s * 25);
+
+  let sortedFile = file.sort((obj1, obj2) => obj1.rating - obj2.rating);
+  let card_number = file.indexOf(sortedFile[user_memory]);
+  
   if (ans) {
-    text(file[0] + "\n\n\n" + file[1], shift * 3, 0, width, height);
+    text(file[card_number].question + "\n\n\n" + file[card_number].answer, shift * 3, 0, width, height);
   } else {
-    text(file[0], shift * 3, 0, width, height);
+    text(file[card_number].question, shift * 3, 0, width, height);
   }
-  strokeWeight(40 * s);
-  stroke(
-    lerpColor(c("Green"), c("Red"), map(streak, 0, file.length / 2, 1, 0))
-  );
-  line(0, height, map(streak, 0, file.length / 2, 0, width), height);
 
   if (hold > 0 && !wait) {
     shift += mouseX - pmouseX;
@@ -474,26 +464,27 @@ function flashcards() {
     wait = false;
     //YES
     if (shift * 3 < -width / 4) {
-      file.splice(file.length, 0, file[1]);
-      file.splice(file.length, 0, file[0]);
-      file.splice(0, 2);
+      print("The user knew: "+file[card_number].question);
+      file[card_number].rating += 1/(millis() - timer_start);
       wait = true;
       ans = false;
-      streak++;
     }
     //NO
     if (shift * 3 > width / 4) {
       if (!ans) {
+        print("The user saw the answer to: "+file[card_number].question);
         wait = true;
         ans = true;
       } else {
-        file.splice(6, 0, file[1]);
-        file.splice(6, 0, file[0]);
-        file.splice(0, 2);
+        print("The user did'nt know: "+file[card_number].question);
+        file[card_number].rating -= 1/(millis() - timer_start);
         wait = true;
         ans = false;
-        streak = 0;
       }
+    }
+
+    if (shift * 3 > width / 4 || shift * 3 < -width / 4) {
+      timer_start = millis();
     }
   }
 
