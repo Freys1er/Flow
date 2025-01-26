@@ -7,9 +7,11 @@ let points = [];
 let s = 0;
 let hold = 0;
 let end = 0;
-let sets = [];
-let total = [];
-let scroll = 0;
+let total = 0;
+let scroll = {
+  pos: 0,
+  velocity: 0,
+};
 let redirect = "HOME";
 let cookies;
 
@@ -58,54 +60,34 @@ function preload() {
   );
 }
 
-//MORE SETUp
+function contains(a, b) {
+  // Convert both strings to lowercase
+  let lowerA = a.toLowerCase();
+  let lowerB = b.toLowerCase();
+
+  // Remove special characters from both strings
+  let cleanedA = lowerA.replace(/[^a-z0-9]/gi, '');
+  let cleanedB = lowerB.replace(/[^a-z0-9]/gi, '');
+
+  // Check if the cleaned string a contains the cleaned string b
+  return cleanedA.includes(cleanedB);
+}
+
+//filters
 function filtersets(term) {
-  h.recent = getItem("Recent_Sets");
-  if (!h.recent) {
-    h.recent = [];
+  if (!term){
+    term = '';
   }
-  h.keys = [];
-  h.titles = ["CONTINUE STUDYING"];
-  h.names = [h.recent];
-  h.r = [];
-  h.colors = [];
-
-  if (term) {
-    term = term.toUpperCase();
-  } else {
-    term = " ";
-  }
-
-  for (let i = 0; i < data.flow.length; i++) {
-    tags = data.flow[i].slice(0, 3).join(" ");
-    if (tags.toUpperCase().indexOf(term) > -1) {
-      x = data.flow[i][2].toUpperCase().split(" ");
-      for (let j = 0; j < x.length; j++) {
-        if (h.keys.indexOf(x[j]) === -1) {
-          h.keys.push(x[j]);
-          h.r.push([]);
-        }
-        h.r[h.keys.indexOf(x[j])].push({
-          name: data.flow[i][2],
-          email: data.flow[i][1],
-          date: data.flow[i][0],
-        });
-      }
-    }
-  }
-  for (let i = 100; i > 0; i--) {
-    for (let j = 0; j < h.keys.length; j++) {
-      if (h.r[j].length === i && (h.keys[j].length > 4 || term !== " ")) {
-        h.titles.push(h.keys[j]);
-        h.names.push(h.r[j]);
-        h.scroll.push(s * 50);
-      }
+  sets = [];
+  for (let i = 0;i<data.flow.length;i++){
+    if (contains(data.flow[i].join(""),term)){
+      sets.push(data.flow[i]);
     }
   }
 }
 
 function mouseWheel(event) {
-  scroll -= event.delta;
+  scroll.pos -= event.delta;
 }
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -118,8 +100,9 @@ function setup() {
 
   data = {
     flow: data.flow.getArray(),
-    colors: data.colors
+    colors: data.colors,
   };
+
   glide.info = (height / 5) * 2;
 
   s = min([width, height]) / 500;
@@ -132,16 +115,10 @@ function setup() {
 
   //DATA WRANGLING - FLAHSCARDS
   for (let i = 0; i < data.flow.length; i++) {
-    sets.push(data.flow[i][2]);
-    total.push(data.flow[i][3].split("#").length);
+    total += data.flow[i][3].split("#").length;
   }
 
   filtersets();
-
-  //BACKGROUND ANIMATION
-  for (let i = 0; i < 20; i++) {
-    points.push([random(width), random(height), random(-1, 1), random(-1, 1)]);
-  }
 }
 //FUNCTIONS
 function todate(x) {
@@ -167,43 +144,19 @@ function todate(x) {
     x[2]
   );
 }
-function animation() {
-  strokeWeight(2);
-  for (let i = 0; i < points.length; i++) {
-    points[i][0] += points[i][2] / 10;
-    points[i][1] += points[i][3] / 10;
 
-    if (points[i][0] > width || points[i][0] < 0) {
-      points[i][2] = -points[i][2];
-    }
-    if (points[i][1] > height || points[i][1] < 0) {
-      points[i][3] = -points[i][3];
-    }
-  }
-
-  // Draw lines between nearby points
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      let d = dist(points[i][0], points[i][1], points[j][0], points[j][1]);
-      stroke(
-        lerpColor(color(0, 0, 0, 0), c("Lines"), map(d, 0, s * 300, 1, 0))
-      );
-      line(points[i][0], points[i][1], points[j][0], points[j][1]);
-    }
-  }
-}
 function button(x, y, w, h) {
   return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + h;
 }
 
 //COLORS
 function c(x) {
-  if (data.colors.getColumn(x)[0]){
+  if (data.colors.getColumn(x)[0]) {
     let list = split(data.colors.getColumn(x)[0], ",");
     return color(list[0], list[1], list[2]);
-  }else{
-    console.warn("Color '"+x+"' was not found, reverted to red");
-    return color(255,0,0);
+  } else {
+    console.warn("Color '" + x + "' was not found, reverted to red");
+    return color(255, 0, 0);
   }
 }
 
@@ -212,21 +165,23 @@ function shownotes(x) {
   background(c("Background"));
   x = x.split(/<|>/);
   if (mouseIsPressed) {
-    velocity -= pmouseY - mouseY;
+    scroll.velocity = pmouseY - mouseY;
+    scroll.pos -= scroll.velocity;
+    scroll.velocity *= 0.95;
   }
-  if (scroll < -notes.len) {
+  if (scroll.pos < -notes.len) {
     notes.next = true;
-    scroll = -notes.len;
+    scroll.pos = -notes.len;
   }
-  if (scroll > 0) {
-    scroll = 0;
+  if (scroll.pos > 0) {
+    scroll.pos = 0;
   }
   j = 0;
   fill(c("Text"));
   notes.count = 0;
   i = 1;
   push();
-  translate(0, scroll);
+  translate(0, scroll.pos);
   while (notes.count < notes.progress && i < x.length) {
     if (x[i] === "H1") {
       textAlign(CENTER, TOP);
@@ -318,7 +273,7 @@ function shownotes(x) {
     stage = "FLOW";
     choosen = "";
     wait = true;
-    scroll = height / 3;
+    scroll.pos = height / 3;
   }
 }
 
@@ -351,201 +306,135 @@ function saverecent() {
   h.recent.splice(0, 0, choosen);
   storeItem("Recent_Sets", h.recent);
 }
-let velocity = 0;
-function flow() {
-  scroll -= velocity;
-  velocity *= 0.92;
-  background(c("Background"));
 
+function flow() {
+  background(c("Background"));
   if (search !== type.value()) {
     search = type.value();
     filtersets(search);
   }
 
-  fill(c("Inverse"));
-  textSize(s * 20);
-  text(
-    floor(total.reduce((a, b) => a + b) - 10000 / (frameCount - start) / 10) +
-      " flashcards and counting...",
-    width / 2,
-    height / 40
-  );
+  if (mouseIsPressed) {
+    scroll.velocity = pmouseY - mouseY;
+  }
 
-  if (abs(mouseX - pmouseX) < abs(mouseY - pmouseY) && mouseIsPressed) {
-    velocity = pmouseY - mouseY;
+  scroll.pos -= scroll.velocity;
+  scroll.velocity *= 0.95;
+
+  if (scroll.pos < -data.flow.length * height * 0.22 + height) {
+    scroll.pos = -sets.length * height * 0.22 + height;
   }
-  if (scroll > height / 3) {
-    scroll = height / 3;
+  if (scroll.pos > height / 9) {
+    scroll.pos = height / 9;
   }
-  if (scroll < -h.titles.length * s * 200 + height / 2) {
-    scroll = -h.titles.length * s * 200 + height / 2;
-  }
-  stroke(c("Cyan"));
+  stroke(c("SetsStroke"));
   fill(c("Background"));
   strokeWeight(2);
   rect(
-    width /80,
-    scroll-height / 3.5,
+    width / 80,
+    -height * 0.1 + scroll.pos,
     width - width / 40,
-    height/4.5,
+    height / 20,
     20
   );
 
-  type.size(width - s * 40, height / 3);
-  type.position(s * 20, scroll - height / 2.3);
+  type.size(width - width / 40, height / 20);
+  type.position(width / 80, -height * 0.1 + scroll.pos);
 
   textAlign(CENTER, CENTER);
   noStroke();
   fill(c("SetsText"));
-  textSize(s * 100);
-  if (minute() < 10) {
-    text(
-      hour() + ":0" + minute(),
-      width / 2,
-      scroll-height/5.5
-    );
-  } else {
-    text(
-      hour() + ":" + minute(),
-      width/2,
-      scroll-height/5.5
-    );
-  }
-  textSize(s * 15);
-  text(type.value(), s * 20, scroll - height / 3.7, width - s * 40, height / 3);
+  textSize(s * 20);
+  text(
+    type.value(),
+    width / 80,
+    -height * 0.1 + scroll.pos,
+    width - width / 40,
+    height / 20
+  );
   if (type.value().length <= 1) {
-    text("Search", s * 20, scroll - height / 3.7, width - s * 40, height / 3);
+    text(
+      "Search " + total + " flashcards",
+      width / 80,
+      -height * 0.1 + scroll.pos,
+      width - width / 40,
+      height / 20
+    );
   }
   noStroke();
-  for (let i = 0; i < h.titles.length; i++) {
-    textSize(s * 25);
-    textAlign(LEFT, CENTER);
-    fill(c("Background"));
-    stroke(c("Border"));
+
+  for (let i = 0; i < sets.length; i++) {
+    fill(c("SetsFill"));
+    stroke(c("SetsStroke"));
+
     rect(
       width / 80,
-      i * s * 200 + scroll - s * 35,
-      h.names[i].length * s * 190 + s * 100,
-      s * 180,
+      i * height * 0.22 + scroll.pos - height / 40,
+      width - width / 40,
+      height * 0.19,
       20
     );
-    fill(c("Border"));
-    rect(
-      map(
-        h.scroll[i],
-        s * 20,
-        -h.names[i].length * s * 200 + s * 300,
-        width / 80,
-        min([h.names[i].length * s * 190 + s * 100, width])
-      ) * 0.85,
-      i * s * 200 + scroll + s * 137,
-      s * 90,
-      s * 8,
-      50
+
+    noStroke();
+    textSize(min(s * 50, (width / sets[i][2].length) * 2));
+    fill(c("SetsText"));
+    text(
+      sets[i][2],
+      width / 2,
+      i * height * 0.22 + scroll.pos + height / 40
     );
-    fill(c("Titles"));
-    text(h.titles[i], s * 50, i * s * 200 + scroll - s * 15);
-    for (let j = 0; j < h.names[i].length; j++) {
-      fill(
-        c("Background")
-      );
-      strokeWeight(2);
-      stroke(c("Cyan"));
-      if (choosen === h.names[i][j]) {
-        fill(c("Inverse"));
-      }
-      rect(
-        j * s * 200 + h.scroll[i],
-        i * s * 200 + scroll,
-        s * 190,
-        s * 130,
-        10
-      );
-      noStroke();
 
-      if (
-        glide.info + 100 > (height / 5) * 2 &&
-        hold === 1 && 
-        button(
-          j * s * 200 + h.scroll[i],
-          i * s * 200 + scroll,
-          s * 190,
-          s * 130
-        ) &&
-        abs(pmouseY-mouseY)<1
-      ) {
-        choosen = h.names[i][j];
-        glide.up = false;
-        glide.info = (height / 5) * 2;
-      }
-
-      textAlign(CENTER, CENTER);
-      if (choosen === h.names[i][j]) {
-        fill(c("InverseSetsText"));
-      } else {
-        fill(c("SetsText"));
-      }
-
-      textSize(s * 20);
+    textSize(s * 30);
+    if (sets[i][4] === "NOTES") {
+      text("Notes", width / 2, i * height * 0.22 + scroll.pos + height / 30);
+    } else {
       text(
-        h.names[i][j].name,
-        j * s * 200 + h.scroll[i],
-        i * s * 200 + scroll,
-        s * 180,
-        s * 130
-      );
-
-      textSize(s * 12);
-      text(
-        h.names[i][j].email,
-        j * s * 200 + h.scroll[i],
-        i * s * 200 + scroll + s * 40,
-        s * 180,
-        s * 130
-      );
-      textSize(s * 10);
-      text(
-        h.names[i][j].date,
-        j * s * 200 + h.scroll[i],
-        i * s * 200 + scroll + s * 55,
-        s * 180,
-        s * 130
+        floor(sets[i][3].split("#").length / 2) + " flashcards",
+        width / 2,
+        i * height * 0.22 + scroll.pos + height / 10
       );
     }
+
+    textSize(s * 15);
+
+    text(
+      sets[i][0],
+      width / 4,
+      i * height * 0.22 + scroll.pos + height / 7
+    );
+    text(
+      sets[i][1],
+      (width / 4) * 3,
+      i * height * 0.22 + scroll.pos + height / 7
+    );
+
     if (
-      mouseIsPressed &&
-      mouseY > i * s * 200 + scroll &&
-      mouseY < i * s * 200 + scroll + s * 200 &&
-      abs(mouseX - pmouseX) > abs(mouseY - pmouseY)
+      hold < 10 &&
+      hold > 0 &&
+      abs(pmouseX - mouseX) > abs(pmouseY - mouseY) &&
+      !mouseIsPressed &&
+      button(
+        width / 80,
+        i * height * 0.22 + scroll.pos - height / 40,
+        width - width / 40,
+        height * 0.19
+      )
     ) {
-      h.scroll[i] += mouseX - pmouseX;
-      if (h.scroll[i] < -h.names[i].length * s * 200 + s * 300) {
-        h.scroll[i] = -h.names[i].length * s * 200 + s * 300;
+      stage = sets[i][4];
+      file = sets[i][3];
+      choosen = sets[i][2];
+
+      if (stage !== "NOTES") {
+        file = file.split("#");
       }
+      saverecent(choosen);
     }
-    if (h.scroll[i] > s * 20) {
-      h.scroll[i] = s * 20;
-    }
-  }
-  
-  if (choosen && stage !== "EXIT-FLOW") {
-    for (let i = 0; i < data.flow.length; i++) {
-      if (data.flow[i][2] === choosen.name) {
-        stage = data.flow[i][4];
-        file = data.flow[i][3];
-      }
-    }
-    if (stage !== "NOTES") {
-      file = file.split("#");
-    }
-    saverecent(choosen);
   }
 }
 
 function flashcards() {
   fill(c("Background"));
   rect(0, 0, width, height);
-  animation();
 
   textAlign(CENTER, CENTER);
   textSize(s * 20);
@@ -599,10 +488,8 @@ function flashcards() {
   textAlign(LEFT, TOP);
   fill(c("Exit"));
   noStroke();
-  rect(width / 80, height / 4, width / 180, height / 2, 20);
-  rect(width / 40, height / 4, width / 180, height / 2, 20);
-
-  if (hold === 1 && mouseX < width / 20) {
+  rect(width / 80, height / 4, height / 120, height / 2, 20);
+  if (mouseIsPressed && mouseX < width / 20) {
     stage = "EXIT-FLOW";
     wait = true;
   }
@@ -637,14 +524,10 @@ function draw() {
     flashcards();
     pop();
     if (hold === 0) {
-      scroll = height / 3;
       if (mouseX < width / 2) {
         stage = "FLASHCARDS";
       } else {
-        file = null;
-        choosen = "";
         stage = "FLOW";
-        glide.info = (height / 5) * 2;
       }
     }
   }
